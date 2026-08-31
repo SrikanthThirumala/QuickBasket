@@ -95,6 +95,32 @@ def add_product():
     finally:
         connection.close()
 
+@admin_bp.route('/api/admin/products/<int:product_id>', methods=['PUT'])
+@admin_required
+def update_product(product_id):
+    data = request.json
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE products 
+                SET name=%s, price=%s, image_url=%s, category=%s, unit=%s, stock_quantity=%s, calories=%s 
+                WHERE id=%s
+            """, (
+                data['name'], 
+                data['price'], 
+                data['image_url'], 
+                data['category'], 
+                data['unit'], 
+                data['stock_quantity'], 
+                data['calories'], 
+                product_id
+            ))
+            connection.commit()
+            return jsonify({"message": "Product updated successfully"}), 200
+    finally:
+        connection.close()
+
 @admin_bp.route('/api/admin/products/<int:product_id>', methods=['DELETE'])
 @admin_required
 def delete_product(product_id):
