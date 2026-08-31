@@ -55,25 +55,41 @@ export default function OrdersPage() {
                     <p className="text-sm font-semibold text-slate-800">{new Date(order.created_at).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 font-bold uppercase">Total</p>
-                    <p className="text-sm font-semibold text-emerald-700">${order.total_amount.toFixed(2)}</p>
+                    <p className="text-xs text-slate-500 font-bold uppercase">Total Amount</p>
+                    <p className="text-sm font-semibold text-emerald-700">₹{order.total_amount.toFixed(2)}</p>
                   </div>
                   <div className="text-right">
-                    <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">{order.status}</span>
+                    <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full ${
+                      order.status === 'Pending' ? 'bg-orange-100 text-orange-700' :
+                      order.status === 'Shipped' ? 'bg-blue-100 text-blue-700' :
+                      'bg-emerald-100 text-emerald-700'
+                    }`}>
+                      {order.status}
+                    </span>
                   </div>
                 </div>
 
                 <div className="p-4">
-                  <p className="text-xs text-slate-500 font-bold uppercase mb-2">Delivery Address</p>
-                  <p className="text-sm text-slate-700 mb-4 bg-slate-50 p-2 rounded border border-slate-100">{order.delivery_address}</p>
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <p className="text-xs text-slate-500 font-bold uppercase mb-1">Delivery Address</p>
+                      <p className="text-sm text-slate-700 bg-slate-50 p-2 rounded border border-slate-100">{order.delivery_address}</p>
+                    </div>
+                    {order.total_calories > 0 && (
+                      <div className="text-right">
+                        <p className="text-xs text-slate-500 font-bold uppercase mb-1">Calories Gained</p>
+                        <p className="text-sm font-black text-orange-600">+{order.total_calories} kcal</p>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="space-y-3">
                     {order.items.map((item, idx) => (
-                      <div key={idx} className="flex gap-4 items-center">
+                      <div key={idx} className="flex gap-4 items-center p-2 hover:bg-slate-50 rounded">
                         <img src={item.image_url} alt={item.name} className="w-12 h-12 object-cover rounded shadow-sm" />
                         <div>
                           <p className="text-sm font-bold text-slate-800">{item.name}</p>
-                          <p className="text-xs text-slate-500">Qty: {item.quantity} x ${item.price_at_purchase.toFixed(2)}</p>
+                          <p className="text-xs text-slate-500">Qty: {item.quantity} x ₹{item.price_at_purchase.toFixed(2)}</p>
                         </div>
                       </div>
                     ))}

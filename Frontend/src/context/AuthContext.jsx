@@ -6,18 +6,28 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
+
+  const decodeToken = (token) => {
+    try {
+      return JSON.parse(atob(token.split('.')[1]));
+    } catch (e) {
+      return null;
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem('quickbasket_token');
-    if (token) setUser({ token });
-    setIsHydrated(true); // Prevents SSR mismatch
+    if (token) {
+      const decoded = decodeToken(token);
+      setUser({ token, role: decoded?.role || 'user' });
+    }
   }, []);
 
   const login = (token) => {
     localStorage.setItem('quickbasket_token', token);
-    setUser({ token });
+    const decoded = decodeToken(token);
+    setUser({ token, role: decoded?.role || 'user' });
     router.push('/');
   };
 
@@ -26,8 +36,6 @@ export function AuthProvider({ children }) {
     setUser(null);
     router.push('/'); 
   };
-
-  if (!isHydrated) return null; // Wait for client to mount before showing profile/logout buttons
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>

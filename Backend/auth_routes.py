@@ -1,4 +1,4 @@
-import os, jwt, random, datetime
+import os, jwt, random, datetime, re
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from db import get_db_connection
@@ -16,6 +16,14 @@ def generate_token(user_id, role):
     }
     return jwt.encode(payload, SECRET_KEY, algorithm='HS256')
 
+def is_valid_password(password):
+    if len(password) < 8: return False
+    if not re.search(r"[a-z]", password): return False
+    if not re.search(r"[A-Z]", password): return False
+    if not re.search(r"[0-9]", password): return False
+    if not re.search(r"[\W_]", password): return False
+    return True
+
 @auth_bp.route('/api/auth/signup', methods=['POST'])
 def signup():
     data = request.json
@@ -23,6 +31,9 @@ def signup():
     
     if not all([username, email, password]):
         return jsonify({"error": "All fields are required"}), 400
+
+    if not is_valid_password(password):
+        return jsonify({"error": "Password must be at least 8 characters and include an uppercase letter, lowercase letter, number, and special character."}), 400
 
     hashed_pw = generate_password_hash(password)
     otp_code = str(random.randint(100000, 999999))
@@ -100,6 +111,9 @@ def change_password(current_user_id, role):
     old_password = data.get('old_password')
     new_password = data.get('new_password')
     
+    if not is_valid_password(new_password):
+        return jsonify({"error": "New password does not meet security requirements."}), 400
+
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
@@ -112,5 +126,33 @@ def change_password(current_user_id, role):
                            (generate_password_hash(new_password), current_user_id))
             connection.commit()
             return jsonify({"message": "Password updated successfully"}), 200
+    finally:
+        connection.close()
+
+@auth_bp.route('/api/auth/change-email', methods=['PUT'])
+@token_required
+def change_email(current_user_id, role):
+    data = request.json
+    new_email = data.get('new_email')
+    password = data.get('password')
+
+    if not new_email or not password:
+        return jsonify({"error": "New email and current password are required."}), 400
+
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT password_hash FROM users WHERE id = %s", (current_user_id,))
+            user = cursor.fetchone()
+            if not check_password_hash(user['password_hash'], password):
+                return jsonify({"error": "Incorrect password. Email update denied."}), 401
+                
+            cursor.execute("SELECT id FROM users WHERE email = %s", (new_email,))
+            if cursor.fetchone():
+                return jsonify({"error": "That email is already in use by another account."}), 409
+                
+            cursor.execute("UPDATE users SET email = %s WHERE id = %s", (new_email, current_user_id))
+            connection.commit()
+            return jsonify({"message": "Email address updated successfully"}), 200
     finally:
         connection.close()

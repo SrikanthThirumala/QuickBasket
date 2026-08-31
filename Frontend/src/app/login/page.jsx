@@ -58,6 +58,9 @@ export default function LoginPage() {
               )}
               <input type="email" placeholder="Email Address" required className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 transition-all" onChange={(e) => setFormData({...formData, email: e.target.value})} />
               <input type="password" placeholder="Password" required className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 transition-all" onChange={(e) => setFormData({...formData, password: e.target.value})} />
+              {step === 'signup' && (
+                <p className="text-[10px] text-slate-500">Requires 8+ chars, uppercase, lowercase, number, & special character.</p>
+              )}
             </>
           )}
           <button type="submit" className="pop-click w-full bg-emerald-600 text-white font-bold py-3 rounded-lg hover:bg-emerald-700 transition-all">

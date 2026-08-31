@@ -9,10 +9,12 @@ import CartDrawer from '../components/CartDrawer';
 export default function Storefront() {
   const [products, setProducts] = useState([]);
   const [calorieAnim, setCalorieAnim] = useState([]);
+  const [mounted, setMounted] = useState(false);
   const { addToCart, setIsCartOpen, totalItemCount } = useCart();
   const { user, logout } = useAuth();
 
   useEffect(() => {
+    setMounted(true);
     api.get('/api/products').then(res => setProducts(res.data.products));
   }, []);
 
@@ -37,18 +39,22 @@ export default function Storefront() {
 
       <header className="bg-white shadow-sm sticky top-0 z-30 h-16 flex items-center justify-between px-8">
         <div className="flex items-center gap-4">
-          <Link href="/admin" className="text-xs font-bold bg-slate-800 text-white px-2 py-1 rounded hover:bg-slate-700 transition-all">Admin Access</Link>
+          {mounted && user?.role === 'admin' && (
+            <Link href="/admin" className="text-xs font-bold bg-slate-800 text-white px-2 py-1 rounded hover:bg-slate-700 transition-all">Admin Access</Link>
+          )}
           <h1 className="text-2xl font-black text-emerald-700">QuickBasket</h1>
         </div>
         
         <div className="flex gap-6 items-center">
-          {user ? (
-            <>
-              <Link href="/profile" className="font-bold text-slate-600 hover:text-emerald-600 transition-colors">Profile</Link>
-              <Link href="/orders" className="font-bold text-slate-600 hover:text-emerald-600 transition-colors">Orders</Link>
-              <button onClick={logout} className="font-bold text-red-500 hover:scale-105 transition-transform">Logout</button>
-            </>
-          ) : <Link href="/login" className="font-bold text-emerald-600 hover:scale-105 transition-transform">Sign In</Link>}
+          {mounted && (
+            user ? (
+              <>
+                <Link href="/profile" className="font-bold text-slate-600 hover:text-emerald-600 transition-colors">Profile</Link>
+                <Link href="/orders" className="font-bold text-slate-600 hover:text-emerald-600 transition-colors">Orders</Link>
+                <button onClick={logout} className="font-bold text-red-500 hover:scale-105 transition-transform">Logout</button>
+              </>
+            ) : <Link href="/login" className="font-bold text-emerald-600 hover:scale-105 transition-transform">Sign In</Link>
+          )}
           <button onClick={() => setIsCartOpen(true)} className="pop-click bg-emerald-600 text-white px-4 py-2 rounded-full font-bold shadow-md hover:bg-emerald-700 hover:shadow-lg transition-all">
             🛒 Basket ({totalItemCount})
           </button>

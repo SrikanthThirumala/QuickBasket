@@ -25,7 +25,7 @@ def validate_promo(current_user_id, role):
 def checkout(current_user_id, role):
     data = request.json
     cart = data.get('cart', [])
-    address = data.get('address') # Now a dict: street, city, state, zip
+    address = data.get('address') 
     payment_method = data.get('payment_method', 'Card')
     promo_code = data.get('promo_code')
     
@@ -52,7 +52,6 @@ def checkout(current_user_id, role):
                 total_calories += product['calories'] * item['quantity']
                 items_to_insert.append((item['product_id'], item['quantity'], product['price']))
 
-            # Apply Promo
             if promo_code:
                 cursor.execute("SELECT discount_percent FROM promocodes WHERE code = %s AND is_active = TRUE", (promo_code,))
                 promo = cursor.fetchone()
@@ -76,9 +75,36 @@ def checkout(current_user_id, role):
             
             connection.commit()
             
-            # Send Email
             send_order_email(user['email'], order_id, total_amount, total_calories)
             
             return jsonify({"message": "Order confirmed", "order_id": order_id}), 201
+    finally:
+        connection.close()
+
+@orders_bp.route('/api/orders/history', methods=['GET'])
+@token_required
+def order_history(current_user_id, role):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, total_amount, status, created_at, delivery_address, total_calories FROM orders WHERE user_id = %s ORDER BY created_at DESC",
+                (current_user_id,)
+            )
+            orders = cursor.fetchall()
+            for order in orders:
+                order['total_amount'] = float(order['total_amount'])
+                cursor.execute(
+                    """SELECT oi.quantity, oi.price_at_purchase, p.name, p.image_url 
+                       FROM order_items oi 
+                       JOIN products p ON oi.product_id = p.id 
+                       WHERE oi.order_id = %s""",
+                    (order['id'],)
+                )
+                items = cursor.fetchall()
+                for item in items:
+                    item['price_at_purchase'] = float(item['price_at_purchase'])
+                order['items'] = items
+            return jsonify({"orders": orders}), 200
     finally:
         connection.close()

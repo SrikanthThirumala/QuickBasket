@@ -4,6 +4,7 @@ from auth_middleware import admin_required
 
 admin_bp = Blueprint('admin', __name__)
 
+# --- ORDERS ---
 @admin_bp.route('/api/admin/orders', methods=['GET'])
 @admin_required
 def get_all_orders():
@@ -28,6 +29,18 @@ def update_order_status(order_id):
     finally:
         connection.close()
 
+# --- PROMO CODES ---
+@admin_bp.route('/api/admin/promocodes', methods=['GET'])
+@admin_required
+def get_promos():
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM promocodes ORDER BY id DESC")
+            return jsonify({"promocodes": cursor.fetchall()}), 200
+    finally:
+        connection.close()
+
 @admin_bp.route('/api/admin/promocodes', methods=['POST'])
 @admin_required
 def create_promo():
@@ -39,6 +52,30 @@ def create_promo():
                            (data['code'].upper(), data['discount_percent']))
             connection.commit()
             return jsonify({"message": "Promo code created"}), 201
+    finally:
+        connection.close()
+
+@admin_bp.route('/api/admin/promocodes/<int:promo_id>', methods=['DELETE'])
+@admin_required
+def delete_promo(promo_id):
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM promocodes WHERE id = %s", (promo_id,))
+            connection.commit()
+            return jsonify({"message": "Promo code deleted"}), 200
+    finally:
+        connection.close()
+
+# --- PRODUCTS ---
+@admin_bp.route('/api/admin/products', methods=['GET'])
+@admin_required
+def get_all_products():
+    connection = get_db_connection()
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT * FROM products ORDER BY category, id DESC")
+            return jsonify({"products": cursor.fetchall()}), 200
     finally:
         connection.close()
 
@@ -58,19 +95,14 @@ def add_product():
     finally:
         connection.close()
 
-@admin_bp.route('/api/admin/products/<int:product_id>', methods=['PUT'])
+@admin_bp.route('/api/admin/products/<int:product_id>', methods=['DELETE'])
 @admin_required
-def update_product(product_id):
-    data = request.json
+def delete_product(product_id):
     connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
-            cursor.execute("""
-                UPDATE products 
-                SET name=%s, price=%s, image_url=%s, category=%s, unit=%s, stock_quantity=%s, calories=%s 
-                WHERE id=%s
-            """, (data['name'], data['price'], data['image_url'], data['category'], data['unit'], data['stock_quantity'], data['calories'], product_id))
+            cursor.execute("DELETE FROM products WHERE id = %s", (product_id,))
             connection.commit()
-            return jsonify({"message": "Product updated successfully"}), 200
+            return jsonify({"message": "Product deleted successfully"}), 200
     finally:
         connection.close()
