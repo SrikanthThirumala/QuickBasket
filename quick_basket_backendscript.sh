@@ -19,15 +19,15 @@ source venv/bin/activate
 pip install flask flask-cors pymysql cryptography boto3 pyjwt gunicorn python-dotenv
 
 # Standard clone to tmp directory
-git clone --depth 1 https://github.com/SrikanthThirumala/AWS-Examples.git /tmp/AWS-Examples
+git clone --depth 1 https://github.com/SrikanthThirumala/QuickBasket.git /tmp/QuickBasket
 
 # Enable dotglob to ensure hidden files are moved, copy files, and clean up
 shopt -s dotglob
-cp -r /tmp/AWS-Examples/Backend/* /var/www/quickbasket/backend/
+cp -r /tmp/QuickBasket/Backend/* /var/www/quickbasket/backend/
 shopt -u dotglob
-rm -rf /tmp/AWS-Examples
+rm -rf /tmp/QuickBasket
 
-mysql -h quickbasket-rds.cnmios8g6z81.us-west-2.rds.amazonaws.com -u admin -p'E(gl5v-i[tLdL*eB<5C]uI2YW8U)' < /var/www/quickbasket/backend/db.sql
+mysql -h quickbasket-rds.c164s8ymotmq.us-west-2.rds.amazonaws.com -u admin -p'M7KSuMvSryeSziY>R.FLQk4xff#c' < /var/www/quickbasket/backend/db.sql
 
 cd /var/www/quickbasket/backend
 
@@ -40,14 +40,14 @@ PORT=5000
 
 # AWS Config
 AWS_REGION=us-west-2
-DB_SECRET_NAME=rds!db-411e11df-c300-4bcf-adf5-a3d97e16d3a2
+DB_SECRET_NAME=rds!db-962a14ad-9ed1-4d40-863b-686b4985043d
 
 # Email Config (Use a Google App Password, not your standard password)
-GMAIL_USER=1srikanthdevops@gmail.com
-GMAIL_APP_PASSWORD=djzs kzmw zdpb sjnm
+GMAIL_USER=sanjayreddy5866@gmail.com
+GMAIL_APP_PASSWORD=
 
 # RDS Networking variables
-RDS_HOSTNAME=quickbasket-rds.cnmios8g6z81.us-west-2.rds.amazonaws.com
+RDS_HOSTNAME=quickbasket-rds.c164s8ymotmq.us-west-2.rds.amazonaws.com
 DB_NAME=quickbasket_db
 DB_PORT=3306
 EOF
@@ -91,3 +91,7 @@ EOF
 
 sudo nginx -t
 sudo systemctl restart nginx
+
+# sudo systemctl status nginx
+# sudo journalctl -u quickbasket-backend -n 50 --no-pager
+# sudo systemctl restart quickbasket-backend

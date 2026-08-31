@@ -8,6 +8,7 @@ import CartDrawer from '../components/CartDrawer';
 
 export default function Storefront() {
   const [products, setProducts] = useState([]);
+  const [calorieAnim, setCalorieAnim] = useState([]);
   const { addToCart, setIsCartOpen, totalItemCount } = useCart();
   const { user, logout } = useAuth();
 
@@ -15,44 +16,76 @@ export default function Storefront() {
     api.get('/api/products').then(res => setProducts(res.data.products));
   }, []);
 
+  const handleAddToCart = (e, product) => {
+    addToCart(product);
+    const newAnim = { id: Date.now(), x: e.clientX, y: e.clientY, cal: product.calories };
+    setCalorieAnim(prev => [...prev, newAnim]);
+    setTimeout(() => {
+      setCalorieAnim(prev => prev.filter(a => a.id !== newAnim.id));
+    }, 1000);
+  };
+
+  const zones = [...new Set(products.map(p => p.category))];
+
   return (
     <div className="min-h-screen bg-slate-50">
+      {calorieAnim.map(anim => (
+        <div key={anim.id} className="animate-float" style={{ top: anim.y, left: anim.x }}>
+          +{anim.cal} kcal
+        </div>
+      ))}
+
       <header className="bg-white shadow-sm sticky top-0 z-30 h-16 flex items-center justify-between px-8">
-        <h1 className="text-2xl font-black text-emerald-700">QuickBasket</h1>
+        <div className="flex items-center gap-4">
+          <Link href="/admin" className="text-xs font-bold bg-slate-800 text-white px-2 py-1 rounded hover:bg-slate-700 transition-all">Admin Access</Link>
+          <h1 className="text-2xl font-black text-emerald-700">QuickBasket</h1>
+        </div>
+        
         <div className="flex gap-6 items-center">
           {user ? (
             <>
-              <Link href="/profile" className="font-bold text-slate-600 hover:text-emerald-600">Profile</Link>
-              <Link href="/orders" className="font-bold text-slate-600 hover:text-emerald-600">Orders</Link>
-              <button onClick={logout} className="font-bold text-red-500">Logout</button>
+              <Link href="/profile" className="font-bold text-slate-600 hover:text-emerald-600 transition-colors">Profile</Link>
+              <Link href="/orders" className="font-bold text-slate-600 hover:text-emerald-600 transition-colors">Orders</Link>
+              <button onClick={logout} className="font-bold text-red-500 hover:scale-105 transition-transform">Logout</button>
             </>
-          ) : <Link href="/login" className="font-bold text-emerald-600">Sign In</Link>}
-          <button onClick={() => setIsCartOpen(true)} className="bg-emerald-600 text-white px-4 py-2 rounded-full font-bold">
+          ) : <Link href="/login" className="font-bold text-emerald-600 hover:scale-105 transition-transform">Sign In</Link>}
+          <button onClick={() => setIsCartOpen(true)} className="pop-click bg-emerald-600 text-white px-4 py-2 rounded-full font-bold shadow-md hover:bg-emerald-700 hover:shadow-lg transition-all">
             🛒 Basket ({totalItemCount})
           </button>
         </div>
       </header>
 
-      <section className="bg-emerald-800 text-white py-16 text-center">
-        <h2 className="text-5xl font-black mb-4">Fresh Groceries, Faster.</h2>
-        <p className="text-lg text-emerald-100">Apply code <span className="font-mono bg-white text-emerald-800 px-2 py-1 rounded">QUICKFRESH</span> for 15% off your first order!</p>
-      </section>
-
-      <main className="max-w-7xl mx-auto p-8 grid grid-cols-2 md:grid-cols-4 gap-6">
-        {products.map(product => (
-          <div key={product.id} className="bg-white rounded-xl shadow-sm border p-4 hover:shadow-md transition">
-            <img src={product.image_url} alt={product.name} className="w-full aspect-square object-cover rounded-lg mb-4" />
-            <div className="flex justify-between items-start mb-2">
-               <h3 className="font-bold leading-tight">{product.name}</h3>
-               <span className="text-xs font-bold bg-orange-100 text-orange-700 px-2 py-1 rounded-full">{product.calories} kcal</span>
+      <div className="max-w-7xl mx-auto p-8 space-y-12">
+        {zones.map(zone => (
+          <section key={zone} className="animate-fade-in">
+            <h2 className="text-2xl font-black text-slate-800 mb-6 border-b pb-2">{zone} Zone</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              {products.filter(p => p.category === zone).map(product => (
+                <div key={product.id} className="bg-white rounded-xl shadow-sm border hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden flex flex-col">
+                  <div className="h-40 w-full bg-slate-100 p-2">
+                    <img src={product.image_url} alt={product.name} className="w-full h-full object-contain mix-blend-multiply" />
+                  </div>
+                  <div className="p-4 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-start mb-1">
+                         <h3 className="font-bold text-sm leading-tight text-slate-800">{product.name}</h3>
+                         <span className="text-[10px] font-bold bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full whitespace-nowrap">{product.calories} kcal</span>
+                      </div>
+                      <p className="text-xs text-slate-400 mb-3">{product.unit}</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-black text-emerald-700 mb-3">₹{product.price}</p>
+                      <button onClick={(e) => handleAddToCart(e, product)} className="pop-click w-full bg-emerald-50 text-emerald-700 font-bold py-2 rounded-lg hover:bg-emerald-600 hover:text-white transition-colors duration-300 text-sm">
+                        Add to Basket
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <p className="text-lg font-black text-emerald-700 mb-4">₹{product.price}</p>
-            <button onClick={() => addToCart(product)} className="w-full bg-emerald-50 text-emerald-700 font-bold py-2 rounded-lg hover:bg-emerald-600 hover:text-white transition">
-              Add to Basket
-            </button>
-          </div>
+          </section>
         ))}
-      </main>
+      </div>
       <CartDrawer />
     </div>
   );

@@ -1,3 +1,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-50px) scale(1.5); }
+}
+
+.animate-float {
+  animation: floatUp 1s ease-out forwards;
+  position: fixed;
+  pointer-events: none;
+  z-index: 100;
+  font-weight: 900;
+  color: #ea580c; /* Orange-600 */
+  text-shadow: 0px 2px 4px rgba(0,0,0,0.2);
+}
+
+.pop-click {
+  transition: transform 0.1s;
+}
+.pop-click:active {
+  transform: scale(0.9);
+}

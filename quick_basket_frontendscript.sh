@@ -20,11 +20,11 @@ sudo systemctl enable nginx
 sudo mkdir -p /var/www/quickbasket/frontend
 
 # 5. Clone and transfer files
-git clone --depth 1 https://github.com/SrikanthThirumala/AWS-Examples.git /tmp/AWS-Examples
+git clone --depth 1 https://github.com/SrikanthThirumala/QuickBasket.git /tmp/QuickBasket
 shopt -s dotglob
-sudo cp -r /tmp/AWS-Examples/Frontend/* /var/www/quickbasket/frontend/
+sudo cp -r /tmp/QuickBasket/Frontend/* /var/www/quickbasket/frontend/
 shopt -u dotglob
-sudo rm -rf /tmp/AWS-Examples
+sudo rm -rf /tmp/QuickBasket
 
 cd /var/www/quickbasket/frontend
 
@@ -83,3 +83,8 @@ EOF
 # 12. Restart Nginx to apply changes
 sudo nginx -t
 sudo systemctl restart nginx
+
+# # sudo -u ec2-user pm2 restart quickbasket-frontend
+# sudo -u ec2-user pm2 status quickbasket-frontend
+# pm2 logs
+# sudo systemctl status nginx

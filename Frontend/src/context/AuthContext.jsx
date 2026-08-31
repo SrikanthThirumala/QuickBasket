@@ -6,11 +6,13 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [isHydrated, setIsHydrated] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     const token = localStorage.getItem('quickbasket_token');
     if (token) setUser({ token });
+    setIsHydrated(true); // Prevents SSR mismatch
   }, []);
 
   const login = (token) => {
@@ -22,8 +24,10 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('quickbasket_token');
     setUser(null);
-    router.push('/'); // REDIRECT TO HOME ON LOGOUT
+    router.push('/'); 
   };
+
+  if (!isHydrated) return null; // Wait for client to mount before showing profile/logout buttons
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>
