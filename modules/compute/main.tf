@@ -66,9 +66,9 @@ resource "aws_security_group" "sri_quickbasket_RDS_SG" {
 }
 
 
-resource "aws_security_group" "sri_Frontend_ALB_SG" {
+resource "aws_security_group" "sri_quickbasket_Frontend_ALB_SG" {
   vpc_id = var.vpc_id # Uses the variable passed from root
-  name   = "sri_Frontend_ALB_SG_${var.config.environment}"
+  name   = "sri_quickbasket_Frontend_ALB_SG_${var.config.environment}"
   
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
@@ -87,9 +87,9 @@ resource "aws_security_group" "sri_Frontend_ALB_SG" {
   }
 }
 
-resource "aws_security_group" "sri_Backend_ALB_SG" {
+resource "aws_security_group" "sri_quickbasket_Backend_ALB_SG" {
   vpc_id = var.vpc_id # Uses the variable passed from root
-  name   = "sri_Backend_ALB_SG_${var.config.environment}"
+  name   = "sri_quickbasket_Backend_ALB_SG_${var.config.environment}"
   
   ingress {
     cidr_blocks = ["0.0.0.0/0"]
@@ -139,3 +139,4 @@ resource "aws_instance" "sri_quickbasket_back_end_server" {
     Name = "sri_quickbasket_Backend_server_${var.config.environment}"
   }
 }
+

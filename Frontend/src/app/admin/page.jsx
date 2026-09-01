@@ -4,7 +4,7 @@ import api from '../../lib/api';
 import { useRouter } from 'next/navigation';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('orders'); // 'orders', 'products', 'promos'
+  const [activeTab, setActiveTab] = useState('orders'); 
   
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
@@ -12,10 +12,9 @@ export default function AdminDashboard() {
   
   const [newPromo, setNewPromo] = useState({ code: '', discount_percent: 10 });
   
-  // Product Form States
-  const defaultProductState = { name: '', price: '', image_url: '', category: 'Produce', unit: 'each', stock_quantity: 100, calories: 0 };
+  const defaultProductState = { name: '', price: '', image_url: '', image_file: null, category: 'Produce', unit: 'each', stock_quantity: 100, calories: 0 };
   const [newProduct, setNewProduct] = useState(defaultProductState);
-  const [editingProduct, setEditingProduct] = useState(null); // Holds product being edited
+  const [editingProduct, setEditingProduct] = useState(null); 
   
   const [status, setStatus] = useState('');
   
@@ -44,13 +43,11 @@ export default function AdminDashboard() {
     }
   };
 
-  // --- Orders Logic ---
   const updateOrderStatus = async (id, newStatus) => {
     await api.put(`/api/admin/orders/${id}/status`, { status: newStatus });
     fetchData();
   };
 
-  // --- Promos Logic ---
   const createPromo = async (e) => {
     e.preventDefault();
     try {
@@ -67,18 +64,37 @@ export default function AdminDashboard() {
     fetchData();
   };
 
-  // --- Products Logic ---
   const handleProductSubmit = async (e) => {
     e.preventDefault();
+    const currentState = editingProduct || newProduct;
+    
+    const formData = new FormData();
+    formData.append('name', currentState.name);
+    formData.append('price', currentState.price);
+    formData.append('category', currentState.category);
+    formData.append('unit', currentState.unit);
+    formData.append('stock_quantity', currentState.stock_quantity);
+    formData.append('calories', currentState.calories);
+    
+    if (currentState.image_file) {
+      formData.append('image', currentState.image_file);
+    } else if (currentState.image_url) {
+      formData.append('image_url', currentState.image_url);
+    }
+
     try {
       if (editingProduct) {
-        await api.put(`/api/admin/products/${editingProduct.id}`, editingProduct);
+        await api.put(`/api/admin/products/${editingProduct.id}`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
         setStatus('Product updated successfully!');
-        setEditingProduct(null); // Reset after edit
+        setEditingProduct(null);
       } else {
-        await api.post('/api/admin/products', newProduct);
+        await api.post('/api/admin/products', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
         setStatus('Product added successfully!');
-        setNewProduct(defaultProductState); // Reset form
+        setNewProduct(defaultProductState);
       }
       fetchData();
     } catch (err) {
@@ -95,7 +111,7 @@ export default function AdminDashboard() {
   };
 
   const startEditing = (product) => {
-    setEditingProduct(product);
+    setEditingProduct({ ...product, image_file: null });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -112,13 +128,11 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* Header */}
         <div className="flex justify-between items-center bg-slate-800 text-white p-6 rounded-xl shadow-lg">
           <h1 className="text-3xl font-black">Admin Dashboard</h1>
           <button onClick={() => router.push('/')} className="bg-slate-600 px-4 py-2 rounded font-bold hover:bg-slate-500 transition-all">Back to Store</button>
         </div>
 
-        {/* Tab Navigation */}
         <div className="flex gap-4 border-b pb-2">
           {['orders', 'products', 'promos'].map(tab => (
             <button 
@@ -133,7 +147,6 @@ export default function AdminDashboard() {
 
         {status && <div className="bg-blue-100 text-blue-800 p-3 rounded font-bold">{status}</div>}
 
-        {/* ORDERS TAB */}
         {activeTab === 'orders' && (
           <div className="bg-white p-6 rounded-xl shadow border">
             <h2 className="text-xl font-bold mb-4">Manage Orders</h2>
@@ -167,10 +180,8 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* PRODUCTS TAB */}
         {activeTab === 'products' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Add / Update Product Form */}
             <div className={`lg:col-span-1 bg-white p-6 rounded-xl shadow border h-fit sticky top-6 ${editingProduct ? 'ring-2 ring-emerald-500' : ''}`}>
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold text-slate-800">
@@ -183,7 +194,12 @@ export default function AdminDashboard() {
               <form onSubmit={handleProductSubmit} className="space-y-3">
                 <input type="text" placeholder="Product Name" className="w-full p-2 border rounded" value={currentFormState.name} onChange={e => handleProductChange('name', e.target.value)} required/>
                 <input type="number" placeholder="Price (₹)" className="w-full p-2 border rounded" value={currentFormState.price} onChange={e => handleProductChange('price', e.target.value)} required/>
-                <input type="url" placeholder="Image URL" className="w-full p-2 border rounded" value={currentFormState.image_url} onChange={e => handleProductChange('image_url', e.target.value)} required/>
+                
+                <div className="w-full p-2 border rounded bg-slate-50">
+                  <span className="text-xs text-slate-500 font-bold block mb-1">Upload Image (Replaces current if editing)</span>
+                  <input type="file" accept="image/*" className="w-full text-sm" onChange={e => handleProductChange('image_file', e.target.files[0])} required={!editingProduct && !currentFormState.image_url} />
+                </div>
+
                 <input type="text" placeholder="Category" className="w-full p-2 border rounded" value={currentFormState.category} onChange={e => handleProductChange('category', e.target.value)} required/>
                 <input type="text" placeholder="Unit (e.g. 1 kg, each)" className="w-full p-2 border rounded" value={currentFormState.unit} onChange={e => handleProductChange('unit', e.target.value)} required/>
                 <div className="flex gap-2">
@@ -196,7 +212,6 @@ export default function AdminDashboard() {
               </form>
             </div>
             
-            {/* Product Catalog */}
             <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow border">
               <h2 className="text-xl font-bold mb-4">Product Catalog</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -227,7 +242,6 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* PROMOS TAB */}
         {activeTab === 'promos' && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white p-6 rounded-xl shadow border h-fit">

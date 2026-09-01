@@ -27,7 +27,7 @@ cp -r /tmp/QuickBasket/Backend/* /var/www/quickbasket/backend/
 shopt -u dotglob
 rm -rf /tmp/QuickBasket
 
-mysql -h quickbasket-rds.c164s8ymotmq.us-west-2.rds.amazonaws.com -u admin -p'M7KSuMvSryeSziY>R.FLQk4xff#c' < /var/www/quickbasket/backend/db.sql
+mysql -h quickbasket-rds.cp6i2sgcil45.us-west-2.rds.amazonaws.com -u admin -p':[~xNGk>QNo1t$<s_g2|hrUl>uwh' < /var/www/quickbasket/backend/db.sql
 
 cd /var/www/quickbasket/backend
 
@@ -40,14 +40,14 @@ PORT=5000
 
 # AWS Config
 AWS_REGION=us-west-2
-DB_SECRET_NAME=rds!db-962a14ad-9ed1-4d40-863b-686b4985043d
+DB_SECRET_NAME=rds!db-8efd93df-7e16-492f-9587-9eb3b68dda71
 
 # Email Config (Use a Google App Password, not your standard password)
 GMAIL_USER=sanjayreddy5866@gmail.com
-GMAIL_APP_PASSWORD=
+GMAIL_APP_PASSWORD=djzs kzmw zdpb sjnm
 
 # RDS Networking variables
-RDS_HOSTNAME=quickbasket-rds.c164s8ymotmq.us-west-2.rds.amazonaws.com
+RDS_HOSTNAME=quickbasket-rds.cp6i2sgcil45.us-west-2.rds.amazonaws.com
 DB_NAME=quickbasket_db
 DB_PORT=3306
 EOF
