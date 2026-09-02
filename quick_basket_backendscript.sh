@@ -50,7 +50,7 @@ DB_SECRET_NAME=rds!db-da079386-2d9b-458c-97ce-b81d7ab62a97
 
 # Email Config (Use a Google App Password, not your standard password)
 MAIL_USERNAME=sanjayreddy5866@gmail.com
-MAIL_PASSWORD=
+MAIL_PASSWORD=vgptpvwbxdxlpprz
 
 # RDS Networking variables
 RDS_HOSTNAME=quickbasket-rds.ct2q4sg0iyrh.us-west-2.rds.amazonaws.com

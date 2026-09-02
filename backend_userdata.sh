@@ -1,74 +1,142 @@
-#!/bin/bash
+#!/bin/bash 
 
-# 1. Update and install system dependencies
-yum update -y
-yum install -y mariadb105 nodejs python3-pip amazon-cloudwatch-agent git
-npm install -g pm2
+sudo dnf update -y
+sudo dnf install -y python3 python3-pip python3-devel nginx mariadb105 git
+sudo systemctl enable nginx
 
-# # 2. Go to /root and set up CloudWatch Agent
-# cd /root
-# mkdir sri-cloud-json
-# cd /root/sri-cloud-json
+# Disable default Nginx server on port 80 to prevent conflicts
+sudo sed -i 's/listen       80;/listen       8080;/' /etc/nginx/nginx.conf
+sudo sed -i 's/listen       \[::\]:80;/listen       \[::\]:8080;/' /etc/nginx/nginx.conf
 
-# cat<<'EOF'>/root/sri-cloud-json/amazon-cloudwatch-agent-cloud-init.json
-# {
-#   "logs": {
-#     "logs_collected": {
-#       "files": {
-#         "collect_list": [
-#           {
-#             "file_path": "/var/log/cloud-init-output.log",
-#             "log_group_name": "cloud-init-output-logs",
-#             "log_stream_name": "{instance_id}-all-logs"
-#           }
-#         ]
-#       }
-#     }
-#   }
-# }
-# EOF
+# Create directory and assign permissions using sudo
+sudo mkdir -p /var/www/quickbasket/backend
+sudo chown -R ec2-user:ec2-user /var/www/quickbasket/backend
 
-# sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:/root/sri-cloud-json/amazon-cloudwatch-agent-cloud-init.json
+# Create separated log directories and files
+sudo mkdir -p /var/log/quickbasket/backend
+sudo mkdir -p /var/log/quickbasket/frontend
+sudo touch /var/log/quickbasket/backend/access.log /var/log/quickbasket/backend/error.log
+sudo touch /var/log/quickbasket/frontend/access.log /var/log/quickbasket/frontend/error.log
 
-# --- CRITICAL FIX: Return to /root before cloning ---
-cd /root
+# Enforce application permissions on all logs
+sudo chown -R ec2-user:ec2-user /var/log/quickbasket
 
-# 3. Clone the repository
-git clone --no-checkout --depth 1 https://github.com/SrikanthThirumala/Aws-Fullstack-3-Tier-Python-Projects.git
+cd /var/www/quickbasket/backend
+python3 -m venv venv
+source venv/bin/activate
 
-# 4. Enter the newly cloned repository folder
-cd Aws-Fullstack-3-Tier-Python-Projects
+pip install flask flask-cors pymysql cryptography boto3 pyjwt gunicorn python-dotenv
 
-# 5. Configure sparse-checkout and pull the files
-git sparse-checkout init --cone
-git sparse-checkout set 3-tier-Python-project-with-secret-manager/Back-end-api
-git checkout main
+# Standard clone to tmp directory
+git clone --depth 1 https://github.com/SrikanthThirumala/QuickBasket.git /tmp/QuickBasket
 
-# 6. Create the requirements.txt file 
-cat <<'EOF' > /root/Aws-Fullstack-3-Tier-Python-Projects/3-tier-Python-project-with-secret-manager/Back-end-api/requirements.txt
-Flask
-Requests
-Boto3
-pymysql
+# Enable dotglob to ensure hidden files are moved, copy files, and clean up
+shopt -s dotglob
+cp -r /tmp/QuickBasket/Backend/* /var/www/quickbasket/backend/
+shopt -u dotglob
+rm -rf /tmp/QuickBasket
+
+mysql -h quickbasket-rds.ct2q4sg0iyrh.us-west-2.rds.amazonaws.com -u admin -p'4NqQP0c[bHrYws<cUpwq$GlyPlJU' < /var/www/quickbasket/backend/db.sql
+
+cd /var/www/quickbasket/backend
+
+truncate -s 0 /var/www/quickbasket/backend/.env
+
+cat<<'EOF'> /var/www/quickbasket/backend/.env
+# Server Config
+FLASK_ENV=production
+PORT=5000
+
+# AWS Config
+AWS_REGION=us-west-2
+DB_SECRET_NAME=rds!db-da079386-2d9b-458c-97ce-b81d7ab62a97
+
+# Email Config (Use a Google App Password, not your standard password)
+MAIL_USERNAME=sanjayreddy5866@gmail.com
+MAIL_PASSWORD=
+
+# RDS Networking variables
+RDS_HOSTNAME=quickbasket-rds.ct2q4sg0iyrh.us-west-2.rds.amazonaws.com
+DB_NAME=quickbasket_db
+DB_PORT=3306
+
+S3_BUCKET_NAME=sri-quickbasket-img-production
+CLOUDFRONT_DOMAIN=d17h3tfrrhjcr0.cloudfront.net
 EOF
 
-# 7. Install Python dependencies
-pip3 install -r /root/Aws-Fullstack-3-Tier-Python-Projects/3-tier-Python-project-with-secret-manager/Back-end-api/requirements.txt
+# Use sudo tee to safely write to /etc/ protected directories
+sudo tee /etc/systemd/system/quickbasket-backend.service > /dev/null <<'EOF'
+[Unit]
+Description=Gunicorn instance to serve QuickBasket API
+After=network.target
 
-# 8. Create SQL file
-cat<<'EOF'> /root/Aws-Fullstack-3-Tier-Python-Projects/3-tier-Python-project-with-secret-manager/Back-end-api/test.sql
-Create Database testsridb;
-use testsridb;
-CREATE TABLE IF NOT EXISTS items ( id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(255) NOT NULL,email VARCHAR(255) NOT NULL,country VARCHAR(100) NOT NULL );
+[Service]
+User=ec2-user
+Group=ec2-user
+WorkingDirectory=/var/www/quickbasket/backend
+Environment="PATH=/var/www/quickbasket/backend/venv/bin"
+EnvironmentFile=/var/www/quickbasket/backend/.env
+ExecStart=/var/www/quickbasket/backend/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:5000 app:app
+
+[Install]
+WantedBy=multi-user.target
 EOF
 
-# replace second part 
+sudo systemctl daemon-reload
+sudo systemctl start quickbasket-backend
+sudo systemctl enable quickbasket-backend
 
+# Use sudo tee to safely write to /etc/ protected directories
+sudo tee /etc/nginx/conf.d/backend.conf > /dev/null <<'EOF'
+server {
+    listen 80;
+    server_name _;
 
-mysql -h sri-netf-rds.c3kc0282gen0.us-west-2.rds.amazonaws.com -u admin -p'h$*[HfO>G1dZx7GU[|fnNfZ36seO'<test.sql
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+EOF
 
-sed -i 's/sri-rds-main.c10c4oay0c39.us-west-2.rds.amazonaws.com/sri-netf-rds.c3kc0282gen0.us-west-2.rds.amazonaws.com'/  /root/Aws-Fullstack-3-Tier-Python-Projects/3-tier-Python-project-with-secret-manager/Back-end-api/main.py
+sudo nginx -t
+sudo systemctl restart nginx
 
-sed -i 's/rds!db-146a62f0-5b44-4baa-b67c-4d5eb94ab11d/rds!db-59ded51a-3fc0-497b-ae8e-d60d372c4734'/  /root/Aws-Fullstack-3-Tier-Python-Projects/3-tier-Python-project-with-secret-manager/Back-end-api/main.py
+# monitoring setup 
 
-pm2 start /root/Aws-Fullstack-3-Tier-Python-Projects/3-tier-Python-project-with-secret-manager/Back-end-api/main.py --interpreter python3 --name "Flash-Backend"
+# 1. Install Grafana
+sudo tee /etc/yum.repos.d/grafana.repo > /dev/null <<'EOF'
+[grafana]
+name=grafana
+baseurl=https://rpm.grafana.com
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://rpm.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+EOF
+
+sudo dnf install -y grafana unzip
+sudo systemctl enable --now grafana-server
+
+# 2. Download Loki & Promtail Binaries
+cd /tmp
+wget https://github.com/grafana/loki/releases/download/v2.9.4/loki-linux-amd64.zip
+wget https://github.com/grafana/loki/releases/download/v2.9.4/promtail-linux-amd64.zip
+
+unzip loki-linux-amd64.zip
+unzip promtail-linux-amd64.zip
+
+sudo mv loki-linux-amd64 /usr/local/bin/loki
+sudo mv promtail-linux-amd64 /usr/local/bin/promtail
+
+sudo chmod a+x /usr/local/bin/loki
+sudo chmod a+x /usr/local/bin/promtail
+
+# 3. Configure Loki
+sudo mkdir -p /etc/loki
+sudo tee /etc/loki/loki-config.yaml > /dev/null <<'EOF'
+auth_enabled: false

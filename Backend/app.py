@@ -20,24 +20,38 @@ from log_routes import logs_bp
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# 3. Configure Dual File Loggers
+# 3. Configure File Loggers
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-# Routes logging.INFO to the access log
-info_handler = RotatingFileHandler('/var/log/quickbasket/backend-access.log', maxBytes=10485760, backupCount=5)
-info_handler.setLevel(logging.INFO)
-info_handler.setFormatter(formatter)
+# --- BACKEND LOGGERS ---
+backend_info = RotatingFileHandler('/var/log/quickbasket/backend/access.log', maxBytes=10485760, backupCount=5)
+backend_info.setLevel(logging.INFO)
+backend_info.setFormatter(formatter)
 
-# Routes logging.ERROR to the error log
-error_handler = RotatingFileHandler('/var/log/quickbasket/backend-error.log', maxBytes=10485760, backupCount=5)
-error_handler.setLevel(logging.ERROR)
-error_handler.setFormatter(formatter)
+backend_error = RotatingFileHandler('/var/log/quickbasket/backend/error.log', maxBytes=10485760, backupCount=5)
+backend_error.setLevel(logging.ERROR)
+backend_error.setFormatter(formatter)
 
 app.logger.setLevel(logging.INFO)
-app.logger.addHandler(info_handler)
-app.logger.addHandler(error_handler)
+app.logger.addHandler(backend_info)
+app.logger.addHandler(backend_error)
 
-# 4. Global API Middleware (Automatically logs every request)
+# --- FRONTEND LOGGERS (For React/Client crashes) ---
+frontend_logger = logging.getLogger('frontend')
+frontend_logger.setLevel(logging.INFO)
+
+frontend_info = RotatingFileHandler('/var/log/quickbasket/frontend/access.log', maxBytes=10485760, backupCount=5)
+frontend_info.setLevel(logging.INFO)
+frontend_info.setFormatter(formatter)
+
+frontend_error = RotatingFileHandler('/var/log/quickbasket/frontend/error.log', maxBytes=10485760, backupCount=5)
+frontend_error.setLevel(logging.ERROR)
+frontend_error.setFormatter(formatter)
+
+frontend_logger.addHandler(frontend_info)
+frontend_logger.addHandler(frontend_error)
+
+# 4. Global API Middleware (Automatically logs backend requests)
 @app.after_request
 def log_api_activity(response):
     log_msg = f"API Called: {request.method} {request.path} - Status: {response.status_code}"
