@@ -116,4 +116,4 @@ INSERT INTO products (name, price, image_url, category, unit, stock_quantity, ca
 
 INSERT INTO promocodes (code, discount_percent) VALUES ('QUICKFRESH', 15), ('WELCOME10', 10);
 
--- UPDATE users SET role = 'admin' WHERE email = 'sanjay@sanjay.com';
+-- UPDATE users SET role = 'admin' WHERE email = 'srikanthreddythirumala@gmail.com';

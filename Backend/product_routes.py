@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from db import get_db_connection
 
 products_bp = Blueprint('products', __name__)
@@ -29,5 +29,8 @@ def get_products():
             for p in products:
                 p['price'] = float(p['price'])
             return jsonify({"products": products}), 200
+    except Exception as e:
+        current_app.logger.error(f"DATABASE ERROR: Failed to fetch products list. Details: {str(e)}")
+        return jsonify({"error": "Could not fetch products"}), 500
     finally:
         connection.close()

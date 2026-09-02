@@ -1,3 +1,4 @@
+// src/app/profile/page.jsx
 'use client';
 import { useState } from 'react';
 import api from '../../lib/api';

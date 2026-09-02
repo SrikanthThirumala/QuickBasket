@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from db import get_db_connection
 from auth_middleware import token_required
 from email_service import send_order_email
@@ -15,8 +15,14 @@ def validate_promo(current_user_id, role):
             cursor.execute("SELECT discount_percent FROM promocodes WHERE code = %s AND is_active = TRUE", (code,))
             promo = cursor.fetchone()
             if not promo:
+                current_app.logger.error(f"ORDER ERROR: Invalid or expired promo code attempted: {code}")
                 return jsonify({"error": "Invalid or expired promo code"}), 400
+            
+            current_app.logger.info(f"ORDER SUCCESS: Promo code {code} validated for User ID {current_user_id}")
             return jsonify({"discount_percent": promo['discount_percent']}), 200
+    except Exception as e:
+        current_app.logger.error(f"ORDER ERROR: Promo validation crashed. Details: {str(e)}")
+        return jsonify({"error": "Failed to validate promo code"}), 500
     finally:
         connection.close()
 
@@ -45,6 +51,7 @@ def checkout(current_user_id, role):
                 cursor.execute("SELECT price, stock_quantity, calories FROM products WHERE id = %s", (item['product_id'],))
                 product = cursor.fetchone()
                 if not product or product['stock_quantity'] < item['quantity']:
+                    current_app.logger.error(f"ORDER ERROR: Checkout failed for User ID {current_user_id} - Item {item['product_id']} out of stock")
                     return jsonify({"error": f"Item out of stock."}), 400
                 
                 subtotal = float(product['price']) * item['quantity']
@@ -76,8 +83,12 @@ def checkout(current_user_id, role):
             connection.commit()
             
             send_order_email(user['email'], order_id, total_amount, total_calories)
+            current_app.logger.info(f"ORDER SUCCESS: Order {order_id} successfully processed for User ID {current_user_id}")
             
             return jsonify({"message": "Order confirmed", "order_id": order_id}), 201
+    except Exception as e:
+        current_app.logger.error(f"ORDER ERROR: Checkout crashed for User ID {current_user_id}. Details: {str(e)}")
+        return jsonify({"error": "Order processing failed"}), 500
     finally:
         connection.close()
 
@@ -106,5 +117,8 @@ def order_history(current_user_id, role):
                     item['price_at_purchase'] = float(item['price_at_purchase'])
                 order['items'] = items
             return jsonify({"orders": orders}), 200
+    except Exception as e:
+        current_app.logger.error(f"ORDER ERROR: Failed to fetch history for User ID {current_user_id}. Details: {str(e)}")
+        return jsonify({"error": "Failed to fetch order history"}), 500
     finally:
         connection.close()

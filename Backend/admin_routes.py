@@ -1,11 +1,9 @@
 import os, uuid, boto3
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from db import get_db_connection
 from auth_middleware import admin_required
 
 admin_bp = Blueprint('admin', __name__)
-
-s3_client = boto3.client('s3', region_name=os.getenv('AWS_REGION', 'us-west-2'))
 
 def upload_to_s3(file):
     bucket = os.getenv('S3_BUCKET_NAME')
@@ -13,6 +11,8 @@ def upload_to_s3(file):
     
     if not bucket or not file: 
         return None
+    
+    s3_client = boto3.client('s3', region_name=os.getenv('AWS_REGION', 'us-west-2'))
     
     ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
     filename = f"{uuid.uuid4().hex}.{ext}"
@@ -25,13 +25,15 @@ def upload_to_s3(file):
             ExtraArgs={'ContentType': file.content_type}
         )
         
+        current_app.logger.info(f"S3 SUCCESS: Uploaded {filename} to S3 bucket {bucket}")
+        
         if cloudfront_domain:
             return f"https://{cloudfront_domain}/{filename}"
         else:
             return f"https://{bucket}.s3.{os.getenv('AWS_REGION', 'us-west-2')}.amazonaws.com/{filename}"
             
     except Exception as e:
-        print(f"S3 Upload Error: {e}")
+        current_app.logger.error(f"S3 ERROR: Upload failed. Details: {str(e)}")
         return None
 
 # --- ORDERS ---
@@ -43,6 +45,9 @@ def get_all_orders():
         with connection.cursor() as cursor:
             cursor.execute("SELECT * FROM orders ORDER BY created_at DESC")
             return jsonify({"orders": cursor.fetchall()}), 200
+    except Exception as e:
+        current_app.logger.error(f"ADMIN ERROR: Failed to fetch orders. Details: {str(e)}")
+        return jsonify({"error": "Failed to fetch orders"}), 500
     finally:
         connection.close()
 
@@ -55,7 +60,11 @@ def update_order_status(order_id):
         with connection.cursor() as cursor:
             cursor.execute("UPDATE orders SET status = %s WHERE id = %s", (status, order_id))
             connection.commit()
+            current_app.logger.info(f"ADMIN SUCCESS: Order {order_id} status updated to {status}")
             return jsonify({"message": "Status updated"}), 200
+    except Exception as e:
+        current_app.logger.error(f"ADMIN ERROR: Failed to update order {order_id}. Details: {str(e)}")
+        return jsonify({"error": "Failed to update order"}), 500
     finally:
         connection.close()
 
@@ -68,6 +77,9 @@ def get_promos():
         with connection.cursor() as cursor:
             cursor.execute("SELECT * FROM promocodes ORDER BY id DESC")
             return jsonify({"promocodes": cursor.fetchall()}), 200
+    except Exception as e:
+        current_app.logger.error(f"ADMIN ERROR: Failed to fetch promo codes. Details: {str(e)}")
+        return jsonify({"error": "Failed to fetch promo codes"}), 500
     finally:
         connection.close()
 
@@ -81,7 +93,11 @@ def create_promo():
             cursor.execute("INSERT INTO promocodes (code, discount_percent) VALUES (%s, %s)", 
                            (data['code'].upper(), data['discount_percent']))
             connection.commit()
+            current_app.logger.info(f"ADMIN SUCCESS: Created promo code {data['code'].upper()}")
             return jsonify({"message": "Promo code created"}), 201
+    except Exception as e:
+        current_app.logger.error(f"ADMIN ERROR: Failed to create promo code. Details: {str(e)}")
+        return jsonify({"error": "Failed to create promo code"}), 500
     finally:
         connection.close()
 
@@ -93,7 +109,11 @@ def delete_promo(promo_id):
         with connection.cursor() as cursor:
             cursor.execute("DELETE FROM promocodes WHERE id = %s", (promo_id,))
             connection.commit()
+            current_app.logger.info(f"ADMIN SUCCESS: Deleted promo code ID {promo_id}")
             return jsonify({"message": "Promo code deleted"}), 200
+    except Exception as e:
+        current_app.logger.error(f"ADMIN ERROR: Failed to delete promo code ID {promo_id}. Details: {str(e)}")
+        return jsonify({"error": "Failed to delete promo code"}), 500
     finally:
         connection.close()
 
@@ -106,6 +126,9 @@ def get_all_products():
         with connection.cursor() as cursor:
             cursor.execute("SELECT * FROM products ORDER BY category, id DESC")
             return jsonify({"products": cursor.fetchall()}), 200
+    except Exception as e:
+        current_app.logger.error(f"ADMIN ERROR: Failed to fetch products. Details: {str(e)}")
+        return jsonify({"error": "Failed to fetch products"}), 500
     finally:
         connection.close()
 
@@ -129,7 +152,11 @@ def add_product():
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
             """, (data['name'], data['price'], image_url, data['category'], data['unit'], data['stock_quantity'], data['calories']))
             connection.commit()
+            current_app.logger.info(f"ADMIN SUCCESS: Product '{data['name']}' added successfully")
             return jsonify({"message": "Product added successfully"}), 201
+    except Exception as e:
+        current_app.logger.error(f"ADMIN ERROR: Failed to add product '{data.get('name')}'. Details: {str(e)}")
+        return jsonify({"error": "Failed to add product"}), 500
     finally:
         connection.close()
 
@@ -157,7 +184,11 @@ def update_product(product_id):
                 data['unit'], data['stock_quantity'], data['calories'], product_id
             ))
             connection.commit()
+            current_app.logger.info(f"ADMIN SUCCESS: Product ID {product_id} updated successfully")
             return jsonify({"message": "Product updated successfully"}), 200
+    except Exception as e:
+        current_app.logger.error(f"ADMIN ERROR: Failed to update product ID {product_id}. Details: {str(e)}")
+        return jsonify({"error": "Failed to update product"}), 500
     finally:
         connection.close()
 
@@ -169,6 +200,10 @@ def delete_product(product_id):
         with connection.cursor() as cursor:
             cursor.execute("DELETE FROM products WHERE id = %s", (product_id,))
             connection.commit()
+            current_app.logger.info(f"ADMIN SUCCESS: Product ID {product_id} deleted successfully")
             return jsonify({"message": "Product deleted successfully"}), 200
+    except Exception as e:
+        current_app.logger.error(f"ADMIN ERROR: Failed to delete product ID {product_id}. Details: {str(e)}")
+        return jsonify({"error": "Failed to delete product"}), 500
     finally:
         connection.close()

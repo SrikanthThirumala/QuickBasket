@@ -1,51 +1,53 @@
-import os
-import smtplib
+import smtplib, os
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from flask import current_app
 
 def get_smtp_server():
-    host = os.getenv("SMTP_HOST", "smtp.gmail.com")
-    port = int(os.getenv("SMTP_PORT", 587))
-    user = os.getenv("SMTP_USER", os.getenv("GMAIL_USER"))
-    password = os.getenv("SMTP_PASSWORD", os.getenv("GMAIL_APP_PASSWORD"))
-    return host, port, user, password
+    server = smtplib.SMTP(
+        os.getenv("MAIL_SERVER", "smtp.gmail.com"), 
+        int(os.getenv("MAIL_PORT", 587))
+    )
+    server.starttls()
+    server.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+    return server
 
 def send_otp_email(recipient_email, otp_code):
-    host, port, user, password = get_smtp_server()
-    if not user or not password:
-        return False
-
-    msg = MIMEText(f"Welcome to QuickBasket!\n\nYour 6-digit verification code is: {otp_code}")
-    msg['Subject'] = 'Your QuickBasket Verification Code'
-    msg['From'] = f"QuickBasket <{user}>"
+    sender_email = os.getenv("MAIL_USERNAME")
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
     msg['To'] = recipient_email
+    msg['Subject'] = "QuickBasket - Verify Your Account"
+    
+    body = f"Your verification code is: {otp_code}\nThis code will expire in 10 minutes."
+    msg.attach(MIMEText(body, 'plain'))
     
     try:
-        with smtplib.SMTP(host, port) as server:
-            server.starttls()
-            server.login(user, password)
-            server.sendmail(user, recipient_email, msg.as_string())
+        server = get_smtp_server()
+        server.sendmail(sender_email, recipient_email, msg.as_string())
+        server.quit()
+        current_app.logger.info(f"SUCCESS: OTP email sent to {recipient_email}")
         return True
     except Exception as e:
-        print(f"OTP Email Error: {e}")
+        current_app.logger.error(f"FAILURE: Failed to send OTP to {recipient_email}. Details: {str(e)}")
         return False
 
-def send_order_email(recipient_email, order_id, amount, calories):
-    host, port, user, password = get_smtp_server()
-    if not user or not password:
-        return False
-
-    body = f"Thank you for your order!\n\nOrder ID: #{order_id}\nTotal Amount: ₹{amount}\nEstimated Calories Gained: {calories} kcal\n\nYour delicious groceries are on the way!"
-    msg = MIMEText(body)
-    msg['Subject'] = f'QuickBasket Order Confirmation #{order_id}'
-    msg['From'] = f"QuickBasket <{user}>"
+def send_order_email(recipient_email, *args, **kwargs):
+    sender_email = os.getenv("MAIL_USERNAME")
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
     msg['To'] = recipient_email
+    msg['Subject'] = "QuickBasket - Order Confirmation"
+    
+    body = "Thank you for your order! Your items are being prepared for shipment."
+    msg.attach(MIMEText(body, 'plain'))
     
     try:
-        with smtplib.SMTP(host, port) as server:
-            server.starttls()
-            server.login(user, password)
-            server.sendmail(user, recipient_email, msg.as_string())
+        server = get_smtp_server()
+        server.sendmail(sender_email, recipient_email, msg.as_string())
+        server.quit()
+        current_app.logger.info(f"SUCCESS: Order email sent to {recipient_email}")
         return True
     except Exception as e:
-        print(f"Order Email Error: {e}")
+        current_app.logger.error(f"FAILURE: Failed to send order confirmation to {recipient_email}. Details: {str(e)}")
         return False

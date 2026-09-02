@@ -15,4 +15,23 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (typeof window !== 'undefined' && error.response) {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+      
+      // Prevent infinite loops if the logging endpoint itself fails
+      if (!error.config.url.includes('/api/logs/client')) {
+        axios.post(`${apiUrl}/api/logs/client`, {
+          level: 'error',
+          message: `Frontend API Error: ${error.config.method.toUpperCase()} ${error.config.url} failed with status ${error.response.status}`,
+          details: JSON.stringify(error.response.data)
+        }).catch(() => {});
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

@@ -12,6 +12,12 @@ sudo sed -i 's/listen       \[::\]:80;/listen       \[::\]:8080;/' /etc/nginx/ng
 sudo mkdir -p /var/www/quickbasket/backend
 sudo chown -R ec2-user:ec2-user /var/www/quickbasket/backend
 
+sudo mkdir -p /var/log/quickbasket
+sudo chown -R ec2-user:ec2-user /var/log/quickbasket
+sudo touch /var/log/quickbasket/backend-access.log /var/log/quickbasket/backend-error.log
+
+sudo chown -R ec2-user:ec2-user /var/log/quickbasket
+
 cd /var/www/quickbasket/backend
 python3 -m venv venv
 source venv/bin/activate
@@ -27,7 +33,7 @@ cp -r /tmp/QuickBasket/Backend/* /var/www/quickbasket/backend/
 shopt -u dotglob
 rm -rf /tmp/QuickBasket
 
-mysql -h quickbasket-rds.cp6i2sgcil45.us-west-2.rds.amazonaws.com -u admin -p':[~xNGk>QNo1t$<s_g2|hrUl>uwh' < /var/www/quickbasket/backend/db.sql
+mysql -h quickbasket-rds.ct2q4sg0iyrh.us-west-2.rds.amazonaws.com -u admin -p'4NqQP0c[bHrYws<cUpwq$GlyPlJU' < /var/www/quickbasket/backend/db.sql
 
 cd /var/www/quickbasket/backend
 
@@ -40,16 +46,19 @@ PORT=5000
 
 # AWS Config
 AWS_REGION=us-west-2
-DB_SECRET_NAME=rds!db-8efd93df-7e16-492f-9587-9eb3b68dda71
+DB_SECRET_NAME=rds!db-da079386-2d9b-458c-97ce-b81d7ab62a97
 
 # Email Config (Use a Google App Password, not your standard password)
-GMAIL_USER=sanjayreddy5866@gmail.com
-GMAIL_APP_PASSWORD=djzs kzmw zdpb sjnm
+MAIL_USERNAME=sanjayreddy5866@gmail.com
+MAIL_PASSWORD=
 
 # RDS Networking variables
-RDS_HOSTNAME=quickbasket-rds.cp6i2sgcil45.us-west-2.rds.amazonaws.com
+RDS_HOSTNAME=quickbasket-rds.ct2q4sg0iyrh.us-west-2.rds.amazonaws.com
 DB_NAME=quickbasket_db
 DB_PORT=3306
+
+S3_BUCKET_NAME=sri-quickbasket-img-production
+CLOUDFRONT_DOMAIN=d17h3tfrrhjcr0.cloudfront.net
 EOF
 
 # Use sudo tee to safely write to /etc/ protected directories

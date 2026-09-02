@@ -2,6 +2,7 @@ import os
 import json
 import pymysql
 import boto3
+import logging
 from botocore.exceptions import ClientError
 
 def get_db_credentials():
@@ -17,7 +18,7 @@ def get_db_credentials():
         if 'SecretString' in get_secret_value_response:
             return json.loads(get_secret_value_response['SecretString'])
     except ClientError as e:
-        print(f"Failed to retrieve database secret: {e}")
+        logging.error(f"DATABASE CONFIG ERROR: Failed to retrieve database secret from AWS Secrets Manager: {str(e)}")
         return None
 
 def get_db_connection():
