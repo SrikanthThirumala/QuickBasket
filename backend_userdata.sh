@@ -49,7 +49,7 @@ PORT=5000
 
 # AWS Config
 AWS_REGION=us-west-2
-DB_SECRET_NAME=rds!db-da079386-2d9b-458c-97ce-b81d7ab62a97
+DB_SECRET_NAME=rds!db-dad7ee2e-f49b-47db-bc72-62811c052a12
 
 # Email Config (Use a Google App Password, not your standard password)
 MAIL_USERNAME=sanjayreddy5866@gmail.com

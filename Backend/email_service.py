@@ -4,12 +4,19 @@ from email.mime.multipart import MIMEMultipart
 from flask import current_app
 
 def get_smtp_server():
+    mail_user = os.getenv("MAIL_USERNAME")
+    mail_pass = os.getenv("MAIL_PASSWORD")
+    
+    # Explicitly check for missing credentials before attempting SMTP login
+    if not mail_user or not mail_pass:
+        raise ValueError("Email credentials (MAIL_USERNAME or MAIL_PASSWORD) are missing or empty in the .env file.")
+
     server = smtplib.SMTP(
         os.getenv("MAIL_SERVER", "smtp.gmail.com"), 
         int(os.getenv("MAIL_PORT", 587))
     )
     server.starttls()
-    server.login(os.getenv("MAIL_USERNAME"), os.getenv("MAIL_PASSWORD"))
+    server.login(mail_user, mail_pass)
     return server
 
 def send_otp_email(recipient_email, otp_code):
