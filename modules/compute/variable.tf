@@ -35,3 +35,33 @@ variable "BE_subnet_azs" {
   description = "The az values passed from the network module"
   type        = list(string)
 }
+
+variable "sri_rds_endpoint" {
+  description = "The rds endpoint passed from the database module"
+  type        = string
+}
+
+variable "sri_rds_secret_name" {
+  description = "The rds secret name passed from the database module"
+  type        = string
+}
+
+variable "sri-loki-logs-profile-name" {
+  description = "sri-img-products role name value from iam module "
+  type = string
+}
+
+variable "sri-img-products-profile-name" {
+  description = "sri-loki-logs-profile name value from iam module"
+  type = string
+}
+
+variable "sri_img_fetch_cloudfront_domain_name" {
+  description = "quickbasket_img_fetch_cloudfront_domain_name value"
+  type = string
+}
+
+variable "sri_products_img_bucket_name" {
+  description = "sri_products_img_bucket_name value"
+  type = string
+}

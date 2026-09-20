@@ -24,5 +24,39 @@ module "compute" {
   BE_subnet_ids = module.network.BE_private_subnet_ids
   FE_subnet_azs=module.network.FE_subnet_azs
   BE_subnet_azs=module.network.BE_subnet_azs
+  sri_rds_endpoint = module.database.sri_Rds_endpoint
+  sri_rds_secret_name = module.database.sri_rds_secret_name
+  sri-img-products-profile-name = module.iam.sri-img-products-profile-name
+  sri-loki-logs-profile-name = module.iam.sri-loki-logs-profile-name
+  sri_products_img_bucket_name = module.storage.sri-quickbasket-img-production-bucket-name
+  sri_img_fetch_cloudfront_domain_name = module.cloudfront.quickbasket_img_fetch_cloudfront_domain_name
 
+}
+
+
+module "iam" {
+  source = "./modules/iam"
+}
+
+module "storage" {
+  source = "./modules/storage"
+  
+    environment = "production"
+    quickbasket_img_fetch_cloudfront_arn = module.cloudfront.quickbasket_img_fetch_cloudfront_arn
+  
+}
+
+module "database" {
+  source = "./modules/database"
+  DB_private_subnets_ids=module.network.DB_private_subnet_ids
+  sri_quickbasket_RDS_SG_id = module.compute.sri_quickbasket_RDS_SG_id
+}
+
+module "cloudfront" {
+  source = "./modules/Cloudfront"
+  cldfrnt_config = {
+    environment = "production"
+    quickbasket_img_fetch_s3_regional_domain_name = module.storage.sri-quickbasket-img-production-bucket-regional-domain-name
+    
+  }
 }

@@ -7,7 +7,7 @@ resource "aws_vpc" "sri_quickbasket_vpc" {
     Environment = var.config.environment
   }
 }
-
+#udvyqycgqginfxqj
 resource "aws_internet_gateway" "sri_quickbasket_igw" {
   vpc_id = aws_vpc.sri_quickbasket_vpc.id
   
@@ -68,7 +68,7 @@ resource "aws_route_table" "sri_FE_quickbasket_private_RTB" {
   vpc_id = aws_vpc.sri_quickbasket_vpc.id
   route {
     cidr_block = "0.0.0.0/0"
-    gateway_id = aws_nat_gateway.sri_quickbasket_ngw.id
+    nat_gateway_id   = aws_nat_gateway.sri_quickbasket_ngw.id
   }
   tags = {
     Name="sri_FE_quickbasket_private_RTB_${var.config.environment}"
@@ -97,7 +97,7 @@ resource "aws_route_table" "sri_BE_quickbasket_private_RTB" {
     vpc_id = aws_vpc.sri_quickbasket_vpc.id
       route {
             cidr_block = "0.0.0.0/0"
-                gateway_id = aws_nat_gateway.sri_quickbasket_ngw.id
+               nat_gateway_id   = aws_nat_gateway.sri_quickbasket_ngw.id
       }
         tags = {
               Name="sri_BE_quickbasket_private_RTB_${var.config.environment}"

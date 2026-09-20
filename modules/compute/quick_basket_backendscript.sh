@@ -36,7 +36,7 @@ cp -r /tmp/QuickBasket/Backend/* /var/www/quickbasket/backend/
 shopt -u dotglob
 rm -rf /tmp/QuickBasket
 
-mysql -h quickbasket-rds.cvykuuouaty0.us-west-2.rds.amazonaws.com -u admin -p'v?oCe*4KxB$dU?[sY]~P3<4z2E0w' < /var/www/quickbasket/backend/db.sql
+mysql -h ${db_endpoint} -u admin -p'iX.<ixbr:ahhqc$ojo|M.|r3Xyej' < /var/www/quickbasket/backend/db.sql
 
 cd /var/www/quickbasket/backend
 
@@ -49,19 +49,22 @@ PORT=5000
 
 # AWS Config
 AWS_REGION=us-west-2
-DB_SECRET_NAME=rds!db-dad7ee2e-f49b-47db-bc72-62811c052a12
+DB_SECRET_NAME=${rds_secret_name}
 
 # Email Config (Use a Google App Password, not your standard password)
 MAIL_USERNAME=sanjayreddy5866@gmail.com
 MAIL_PASSWORD=
 
 # RDS Networking variables
-RDS_HOSTNAME=quickbasket-rds.cvykuuouaty0.us-west-2.rds.amazonaws.com
+RDS_HOSTNAME=${db_endpoint}
 DB_NAME=quickbasket_db
 DB_PORT=3306
 
-S3_BUCKET_NAME=sri-quickbasket-img-production
-CLOUDFRONT_DOMAIN=d17h3tfrrhjcr0.cloudfront.net
+
+#also create sri-quickbasket-loki-logs-production bucket to access logs
+
+S3_BUCKET_NAME=${products_img_bucket_name}
+CLOUDFRONT_DOMAIN=${products_img_cldfrnt_name}
 EOF
 
 # Use sudo tee to safely write to /etc/ protected directories
@@ -102,6 +105,77 @@ server {
 EOF
 
 sudo nginx -t
+
+# Description: Installs Promtail to ship logs to the Internal ALB.
+# Note: Update the INTERNAL_ALB_URL variable if your Load Balancer changes.
+
+# INTERNAL_ALB_URL="http://internal-quickbasket-loki-monitr-prod-ALB-389242717.us-west-2.elb.amazonaws.com:80/loki/api/v1/push"
+
+# echo "Installing Promtail..."
+# cd /tmp
+# wget https://github.com/grafana/loki/releases/download/v2.9.4/promtail-linux-amd64.zip
+# sudo dnf install -y unzip
+# unzip promtail-linux-amd64.zip
+# sudo mv promtail-linux-amd64 /usr/local/bin/promtail
+# sudo chmod a+x /usr/local/bin/promtail
+# rm promtail-linux-amd64.zip
+
+# echo "Configuring Promtail..."
+# sudo mkdir -p /etc/promtail
+# sudo tee /etc/promtail/promtail-config.yaml > /dev/null <<EOF
+# server:
+#   http_listen_port: 9080
+#   grpc_listen_port: 0
+
+# positions:
+#   filename: /tmp/positions.yaml
+
+# remove one $ infront of internal_alb_url 
+
+# clients:
+#   - url: $${INTERNAL_ALB_URL} 
+
+# scrape_configs:
+#   - job_name: quickbasket-backend
+#     static_configs:
+#     - targets:
+#         - localhost
+#       labels:
+#         job: backend
+#         env: production
+#         __path__: /var/log/quickbasket/backend/*.log
+
+#   - job_name: quickbasket-frontend
+#     static_configs:
+#     - targets:
+#         - localhost
+#       labels:
+#         job: frontend
+#         env: production
+#         __path__: /var/log/quickbasket/frontend/*.log
+# EOF
+
+# echo "Creating Promtail systemd service..."
+# sudo tee /etc/systemd/system/promtail.service > /dev/null <<'EOF'
+# [Unit]
+# Description=Promtail log shipper
+# After=network.target
+
+# [Service]
+# Type=simple
+# User=root
+# ExecStart=/usr/local/bin/promtail -config.file /etc/promtail/promtail-config.yaml
+# Restart=on-failure
+
+# [Install]
+# WantedBy=multi-user.target
+# EOF
+
+# sudo systemctl daemon-reload
+# sudo systemctl enable --now promtail
+
+# echo "Promtail installation complete. Logs are shipping to the Internal ALB."
+
 sudo systemctl restart nginx
 
 # sudo systemctl status nginx
