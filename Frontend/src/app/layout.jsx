@@ -1,3 +1,4 @@
+/* src/app/layout.jsx */
 import './globals.css';
 import { CartProvider } from '../context/CartContext';
 import { AuthProvider } from '../context/AuthContext';

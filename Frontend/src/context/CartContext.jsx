@@ -1,3 +1,4 @@
+/* src/app/context/CartContext.jsx */
 'use client';
 
 import { createContext, useContext, useState, useEffect } from 'react';

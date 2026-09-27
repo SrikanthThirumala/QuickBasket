@@ -56,6 +56,13 @@ variable "sri-img-products-profile-name" {
   type = string
 }
 
+variable "sri-frontend-iam-profile-name" {
+  description = "sri-frontend role name value to pass it for ec2  from iam module "
+  type = string
+}
+
+
+
 variable "sri_img_fetch_cloudfront_domain_name" {
   description = "quickbasket_img_fetch_cloudfront_domain_name value"
   type = string

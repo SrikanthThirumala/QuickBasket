@@ -9,6 +9,8 @@ data "aws_iam_policy_document" "AssumeRole" {
   
 }
 
+
+#iam role for backend server
 resource "aws_iam_role" "sri-img-products-role" {
   name = "sri-img-products-role"  
   assume_role_policy = data.aws_iam_policy_document.AssumeRole.json
@@ -21,7 +23,7 @@ resource "aws_iam_instance_profile" "sri-img-products-profile" {
   role = aws_iam_role.sri-img-products-role.name
 }
 
-resource "aws_iam_role_policy_attachment" "sri-img-products-role-policy-attachment-1" {
+resource "aws_iam_role_policy_attachment" "sri-img-products-role-policy-attachment-ssm" {
   role = aws_iam_role.sri-img-products-role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
@@ -85,4 +87,25 @@ resource "aws_iam_role_policy" "sri-loki-logs-bucket-custom-policy" {
   name = "sri-loki-logs-bucket-custom-policy"
   role = aws_iam_role.sri-loki-logs-role.id
   policy = data.aws_iam_policy_document.loki-logs-bucket-inline-policy.json
+}
+
+
+#IAM Policy for Frontend 
+
+
+resource "aws_iam_role" "sri-frontend-role" {
+  name = "sri-frontend-role"  
+  assume_role_policy = data.aws_iam_policy_document.AssumeRole.json
+  description = "iam role for frontend ec2 to ssh into server"
+
+}
+
+resource "aws_iam_instance_profile" "sri-frontend-iam-profile" {
+  name = "sri-frontend-iam-profile"
+  role = aws_iam_role.sri-frontend-role.name
+}
+
+resource "aws_iam_role_policy_attachment" "sri-frontend-role-policy-attachment" {
+  role = aws_iam_role.sri-frontend-role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }

@@ -1,3 +1,4 @@
+/* src/app/components/GlobalErrorCatcher.jsx */
 'use client';
 import { useEffect } from 'react';
 import axios from 'axios';

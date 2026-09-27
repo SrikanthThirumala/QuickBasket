@@ -27,10 +27,11 @@ module "compute" {
   sri_rds_endpoint = module.database.sri_Rds_endpoint
   sri_rds_secret_name = module.database.sri_rds_secret_name
   sri-img-products-profile-name = module.iam.sri-img-products-profile-name
+  sri-frontend-iam-profile-name=module.iam.sri-frontend-iam-profile-name
   sri-loki-logs-profile-name = module.iam.sri-loki-logs-profile-name
   sri_products_img_bucket_name = module.storage.sri-quickbasket-img-production-bucket-name
   sri_img_fetch_cloudfront_domain_name = module.cloudfront.quickbasket_img_fetch_cloudfront_domain_name
-
+  
 }
 
 

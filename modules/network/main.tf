@@ -24,6 +24,7 @@ resource "aws_nat_gateway" "sri_quickbasket_ngw" {
   }
 }
 
+#ignore
 #djzs kzmw zdpb sjnm
 
 resource "aws_subnet" "sri_quickbasket_public" {

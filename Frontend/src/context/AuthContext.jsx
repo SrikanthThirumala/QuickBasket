@@ -1,3 +1,4 @@
+/* src/app/context/AuthContext.jsx */
 'use client';
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';

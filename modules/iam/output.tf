@@ -7,3 +7,9 @@ output "sri-loki-logs-profile-name" {
   value = aws_iam_instance_profile.sri-loki-logs-profile.name
   description = "sri-loki-logs-profile name value to pass it for ec2 "
 }
+
+output "sri-frontend-iam-profile-name" {
+  value = aws_iam_instance_profile.sri-frontend-iam-profile.name
+  description = "sri-frontend role name value to pass it for ec2 "
+}
+

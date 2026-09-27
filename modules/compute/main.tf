@@ -182,7 +182,7 @@ resource "aws_instance" "sri_quickbasket_front_end_server" {
   vpc_security_group_ids = [aws_security_group.sri_quickbasket_Frontend_EC2_SG.id]
   availability_zone = var.FE_subnet_azs[0]
   # Ensure the IAM role and userdata script actually exist in your environment
-  iam_instance_profile = var.sri-img-products-profile-name
+  iam_instance_profile = var.sri-frontend-iam-profile-name
    user_data = templatefile("${path.module}/quick_basket_frontendscript.sh",{})
    private_ip = "10.0.3.100"
   
@@ -197,7 +197,7 @@ resource "aws_instance" "sri_quickbasket_back_end_server" {
   subnet_id              = var.BE_subnet_ids[0] # Deploys into the first BE subnet
   vpc_security_group_ids = [aws_security_group.sri_quickbasket_Backend_EC2_SG.id]
   availability_zone = var.BE_subnet_azs[0]
-  # Ensure the IAM role and userdata script actually exist in your environment
+ 
    iam_instance_profile = var.sri-img-products-profile-name
   user_data_base64= base64encode(
     templatefile("${path.module}/quick_basket_backendscript.sh",{

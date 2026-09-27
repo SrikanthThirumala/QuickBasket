@@ -36,7 +36,7 @@ cp -r /tmp/QuickBasket/Backend/* /var/www/quickbasket/backend/
 shopt -u dotglob
 rm -rf /tmp/QuickBasket
 
-mysql -h ${db_endpoint} -u admin -p'iX.<ixbr:ahhqc$ojo|M.|r3Xyej' < /var/www/quickbasket/backend/db.sql
+mysql -h ${db_endpoint} -u admin -p'0G>11J|LIYHy$9m_?7Dzxz$td68|' < /var/www/quickbasket/backend/db.sql
 
 cd /var/www/quickbasket/backend
 
@@ -54,6 +54,7 @@ DB_SECRET_NAME=${rds_secret_name}
 # Email Config (Use a Google App Password, not your standard password)
 MAIL_USERNAME=sanjayreddy5866@gmail.com
 MAIL_PASSWORD=
+
 
 # RDS Networking variables
 RDS_HOSTNAME=${db_endpoint}

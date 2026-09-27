@@ -88,3 +88,6 @@ sudo systemctl restart nginx
 # sudo -u ec2-user pm2 status quickbasket-frontend
 # pm2 logs
 # sudo systemctl status nginx
+#sudo -u ec2-user npm run build
+#sudo -u ec2-user pm2 restart quickbasket-frontend
+#sudo -u ec2-user pm2 logs quickbasket-frontend --lines 30
