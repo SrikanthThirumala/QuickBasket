@@ -23,6 +23,8 @@ resource "aws_db_instance" "sri-rds" {
     storage_type = "gp2"
     vpc_security_group_ids = [ var.sri_quickbasket_RDS_SG_id ]
     db_subnet_group_name = aws_db_subnet_group.sri-rds-subnet-group.id   
+    backup_retention_period = 7
+    skip_final_snapshot = true
 
 }
 
