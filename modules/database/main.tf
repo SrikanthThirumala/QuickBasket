@@ -26,7 +26,15 @@ resource "aws_db_instance" "sri-rds" {
 
 }
 
+resource "aws_db_instance" "sri-rds-replica" {
+  identifier = "sri-rds-replica"
+  instance_class = "db.t3.micro"
+  replicate_source_db = aws_db_instance.sri-rds.identifier
+  depends_on = [aws_db_instance.sri-rds]
+}
+
 data "aws_secretsmanager_secret" "rds_secret_name" {
   arn = aws_db_instance.sri-rds.master_user_secret[0].secret_arn
   
   }
+
