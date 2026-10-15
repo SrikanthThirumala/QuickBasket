@@ -32,11 +32,14 @@ module "compute" {
   sri_products_img_bucket_name = module.storage.sri-quickbasket-img-production-bucket-name
   sri_img_fetch_cloudfront_domain_name = module.cloudfront.quickbasket_img_fetch_cloudfront_domain_name
   
+  sri_aws_region = var.sri_aws_region_val
+  sri_mail_secret_name = "quickbasket/prod/email-credentials"
 }
 
 
 module "iam" {
   source = "./modules/iam"
+  sri_rds_secret_arn = module.database.sri_rds_secret_arn
 }
 
 module "storage" {
@@ -63,3 +66,15 @@ module "cloudfront" {
     
   }
 }
+
+module "load_balancer" {
+  source = "./modules/load_balancer"
+  sri_private_subnets_ids=module.network.BE_private_subnet_ids
+  sri_public_subnets_ids=module.network.public_subnet_ids
+  sri_quickbasket_Frontend_ALB_SG_id=module.compute.sri_quickbasket_Frontend_ALB_SG_id
+  sri_quickbasket_Backend_ALB_SG_id = module.compute.sri_quickbasket_Backend_ALB_SG_id
+  sri_quickbasket_back_end_server_id = module.compute.backendserver-id
+  sri_quickbasket_front_end_server_id = module.compute.frontendserver-id
+  sri_vpc_id = module.network.vpc_id
+}
+

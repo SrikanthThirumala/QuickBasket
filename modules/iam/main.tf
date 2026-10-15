@@ -18,6 +18,33 @@ resource "aws_iam_role" "sri-img-products-role" {
 
 }
 
+data "aws_iam_policy" "secrets_policy" {
+  name = "quickbasket-secrets-access-policy"
+}
+
+resource "aws_iam_role_policy_attachment" "sri-img-products-email-secrets-attach" {
+  role       = aws_iam_role.sri-img-products-role.name
+  policy_arn = data.aws_iam_policy.secrets_policy.arn
+}
+
+
+data "aws_iam_policy_document" "rds-secret-inline-policy" {
+  statement {
+    actions   = ["secretsmanager:GetSecretValue"]
+    
+    # RDS manages the password automatically: this value is for ec2 inturn to provide it to db.py to init the connection 
+    resources = [var.sri_rds_secret_arn]
+    
+   
+  }
+}
+
+resource "aws_iam_role_policy" "sri-rds-secret-custom-policy" {
+  name   = "sri-rds-secret-custom-policy"
+  role   = aws_iam_role.sri-img-products-role.id
+  policy = data.aws_iam_policy_document.rds-secret-inline-policy.json
+}
+
 resource "aws_iam_instance_profile" "sri-img-products-profile" {
   name = "sri-img-products-profile"
   role = aws_iam_role.sri-img-products-role.name
@@ -34,11 +61,7 @@ resource "aws_iam_role_policy_attachment" "sri-img-products-role-policy-attachme
 
 }
 
-resource "aws_iam_role_policy_attachment" "sri-img-products-role-policy-attachment-3" {
-  role = aws_iam_role.sri-img-products-role.name
-  policy_arn = "arn:aws:iam::aws:policy/SecretsManagerReadWrite"
 
-}
 
 data "aws_iam_policy_document" "img-bucket-inline-policy" {
   statement {
@@ -109,3 +132,8 @@ resource "aws_iam_role_policy_attachment" "sri-frontend-role-policy-attachment" 
   role = aws_iam_role.sri-frontend-role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
+
+
+#Iam policy to get mail secrets
+
+

@@ -3,6 +3,18 @@ output "sri_quickbasket_RDS_SG_id" {
   value = aws_security_group.sri_quickbasket_RDS_SG.id
 }
 
+
+output "sri_quickbasket_Frontend_ALB_SG_id" {
+  value = aws_security_group.sri_quickbasket_Frontend_ALB_SG.id
+}
+
+output "sri_quickbasket_Backend_ALB_SG_id" {
+  value = aws_security_group.sri_quickbasket_Backend_ALB_SG.id
+}
+
+
+
+
 output "frontendserver-id" {
   value = aws_instance.sri_quickbasket_front_end_server.id
 }

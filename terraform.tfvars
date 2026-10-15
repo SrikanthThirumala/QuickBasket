@@ -14,7 +14,11 @@ compute_config = {
   ami           = "ami-08b7b9fdd7a1edf3d"
   instance_type = "t3.micro"
   environment   = "production"
+  
+
 }
+
+sri_aws_region_val = "us-west-2"
 
 
 

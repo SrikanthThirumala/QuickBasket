@@ -30,15 +30,15 @@ output "sri_Rds_endpoint" {
   description = "sri_Rds_endpoint value"
 }
 
-output "frontendserver-id" {
-  value = module.compute.frontendserver-id
-}
+# output "frontendserver-id" {
+#   value = module.compute.frontendserver-id
+# }
 
 
-output "backendserver-id" {
-  value = module.compute.backendserver-id
+# output "backendserver-id" {
+#   value = module.compute.backendserver-id
 
-}
+# }
 
 output "cloudfront-quickbasket_img_fetch_cloudfront_domain_name" {
   value = module.cloudfront.quickbasket_img_fetch_cloudfront_domain_name

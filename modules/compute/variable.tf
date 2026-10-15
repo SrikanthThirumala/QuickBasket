@@ -46,6 +46,12 @@ variable "sri_rds_secret_name" {
   type        = string
 }
 
+
+variable "sri_mail_secret_name" {
+  description = "The mail secrets creds  passed "
+  type        = string
+}
+
 variable "sri-loki-logs-profile-name" {
   description = "sri-img-products role name value from iam module "
   type = string
@@ -70,5 +76,12 @@ variable "sri_img_fetch_cloudfront_domain_name" {
 
 variable "sri_products_img_bucket_name" {
   description = "sri_products_img_bucket_name value"
+  type = string
+}
+
+
+
+variable "sri_aws_region" {
+  description = "sri_aws_region value"
   type = string
 }

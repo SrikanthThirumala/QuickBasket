@@ -19,5 +19,18 @@ variable "compute_config" {
     ami           = string
     instance_type = string
     environment   = string
+    
   })
 }      
+
+
+variable "sri_aws_region_val" {
+  type = string
+  description = "aws region"
+}
+
+variable "sri_mail_secret_name" {
+  description = "The mail secrets creds  passed "
+  type        = string
+}
+

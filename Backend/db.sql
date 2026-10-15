@@ -1,8 +1,8 @@
-DROP DATABASE IF EXISTS quickbasket_db;
-CREATE DATABASE quickbasket_db;
+-- 1. Destructive statements removed. Let RDS manage the database lifecycle.
 USE quickbasket_db;
 
-CREATE TABLE users (
+-- 2. Added IF NOT EXISTS to all tables to ensure idempotency.
+CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(120) NOT NULL UNIQUE,
@@ -13,7 +13,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
@@ -26,14 +26,14 @@ CREATE TABLE products (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE promocodes (
+CREATE TABLE IF NOT EXISTS promocodes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(50) NOT NULL UNIQUE,
     discount_percent INT NOT NULL,
     is_active BOOLEAN DEFAULT TRUE
 );
 
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     total_amount DECIMAL(10, 2) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE orders (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     order_id INT NOT NULL,
     product_id INT NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE order_items (
     FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
-CREATE TABLE otp_verifications (
+CREATE TABLE IF NOT EXISTS otp_verifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(120) NOT NULL,
     otp_code VARCHAR(6) NOT NULL,
@@ -65,7 +65,8 @@ CREATE TABLE otp_verifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO products (name, price, image_url, category, unit, stock_quantity, calories) VALUES 
+-- 3. Added INSERT IGNORE to prevent duplicate entry errors if the script runs twice.
+INSERT IGNORE INTO products (name, price, image_url, category, unit, stock_quantity, calories) VALUES 
 -- Produce
 ('Organic Bananas', 60.00, 'https://images.unsplash.com/photo-1603833665858-e61d17a86224?w=400', 'Produce', '1 bunch', 100, 105),
 ('Hass Avocados', 300.00, 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400', 'Produce', '3 pack', 100, 240),
@@ -114,6 +115,18 @@ INSERT INTO products (name, price, image_url, category, unit, stock_quantity, ca
 ('Tomato Ketchup', 110.00, 'https://images.unsplash.com/photo-1577905891109-b6b907577d4b?w=400', 'Pantry', '500g', 100, 101),
 ('Honey', 300.00, 'https://images.unsplash.com/photo-1587049352847-81a56d773c1c?w=400', 'Pantry', '250g', 100, 304);
 
-INSERT INTO promocodes (code, discount_percent) VALUES ('QUICKFRESH', 15), ('WELCOME10', 10);
+INSERT IGNORE INTO promocodes (code, discount_percent) VALUES ('QUICKFRESH', 15), ('WELCOME10', 10);
 
--- UPDATE users SET role = 'admin' WHERE email = 'srikanthreddythirumala@gmail.com';
+-- 4. Secure Admin Insertion
+INSERT INTO users (username, email, password_hash, role, is_verified) 
+VALUES (
+    'admin', 
+    'srikanthreddythirumala@gmail.com', 
+    'pbkdf2:sha256:150000$w8vfDHis$b9c8fa353137417946766ed87cf20510da7e1e3a7b79eef37426330abef552bf', 
+    'admin', 
+    TRUE
+)
+ON DUPLICATE KEY UPDATE 
+    role = 'admin',
+    password_hash = 'pbkdf2:sha256:150000$w8vfDHis$b9c8fa353137417946766ed87cf20510da7e1e3a7b79eef37426330abef552bf',
+    is_verified = TRUE;

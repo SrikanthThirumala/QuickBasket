@@ -7,3 +7,11 @@ output "sri_rds_secret_name" {
   value = data.aws_secretsmanager_secret.rds_secret_name.name
   description = "secret name value to send it for backend script in compute module "
 }
+
+
+
+output "sri_rds_secret_arn" {
+  value       = aws_db_instance.sri-rds.master_user_secret[0].secret_arn
+  description = "ARN of the RDS master secret to send to IAM module"
+}
+

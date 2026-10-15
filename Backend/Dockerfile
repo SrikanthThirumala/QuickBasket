@@ -11,6 +11,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 4. Copy Source Code
 COPY . .
 
+
+
+RUN mkdir -p /var/log/quickbasket/backend /var/log/quickbasket/frontend
+
 # 5. Expose Port
 EXPOSE 5000
 
