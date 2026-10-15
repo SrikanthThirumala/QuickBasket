@@ -31,7 +31,7 @@ module "compute" {
   sri-loki-logs-profile-name = module.iam.sri-loki-logs-profile-name
   sri_products_img_bucket_name = module.storage.sri-quickbasket-img-production-bucket-name
   sri_img_fetch_cloudfront_domain_name = module.cloudfront.quickbasket_img_fetch_cloudfront_domain_name
-  
+  backend_alb_dns_name = module.load_balancer.backend_alb_dns_name
   sri_aws_region = var.sri_aws_region_val
   sri_mail_secret_name = "quickbasket/prod/email-credentials"
 }

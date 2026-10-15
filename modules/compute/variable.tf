@@ -85,3 +85,8 @@ variable "sri_aws_region" {
   description = "sri_aws_region value"
   type = string
 }
+
+variable "backend_alb_dns_name" {
+  description = "value"
+  type = string
+}

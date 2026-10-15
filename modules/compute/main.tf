@@ -183,7 +183,10 @@ resource "aws_instance" "sri_quickbasket_front_end_server" {
   availability_zone = var.FE_subnet_azs[0]
   # Ensure the IAM role and userdata script actually exist in your environment
   iam_instance_profile = var.sri-frontend-iam-profile-name
-  #  user_data = templatefile("${path.module}/quick_basket_frontendscript.sh",{})
+  user_data = templatefile("${path.module}/quick_basket_frontendscript.sh",{
+    backend_alb_dns = var.backend_alb_dns_name
+  })
+  
    private_ip = "10.0.3.100"
   
   tags = {
