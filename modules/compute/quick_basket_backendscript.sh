@@ -51,3 +51,6 @@ docker run -d \
   --env-file .env \
   --name quickbasket-api \
   quickbasket-backend:latest
+
+docker exec -it quickbasket-api python init_db.py
+

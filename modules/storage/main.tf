@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "sri-quickbasket-img-production" {
-  bucket = "sri-quickbasket-img-1-${var.environment}"
+  bucket = "sri-quickbasket-img-${var.environment}"
   
 }
 
@@ -52,7 +52,7 @@ resource "aws_s3_bucket_public_access_block" "sri-quickbasket-img-Public_access_
 
 
 resource "aws_s3_bucket" "sri-quickbasket-loki-logs-production" {
-  bucket = "sri-quickbasket-loki-logs-1-${var.environment}"
+  bucket = "sri-quickbasket-loki-logs-${var.environment}"
   
 }
 

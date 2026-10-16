@@ -14,6 +14,7 @@ resource "aws_db_subnet_group" "sri-rds-subnet-group" {
 resource "aws_db_instance" "sri-rds" {
     identifier = "sri-rds"
     engine = "mysql"
+    db_name = "quickbasket_db"
     engine_version = "8.0"
     instance_class = "db.t3.micro"
     publicly_accessible = false
