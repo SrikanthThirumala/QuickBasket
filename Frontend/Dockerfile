@@ -20,3 +20,5 @@ EXPOSE 3000
 
 # 7. Start Command: Run Next.js in production mode
 CMD ["npm", "start"]
+
+#testing
