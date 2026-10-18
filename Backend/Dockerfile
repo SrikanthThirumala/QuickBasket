@@ -20,3 +20,5 @@ EXPOSE 5000
 
 # 6. Start Command
 CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:5000", "app:app"]
+
+#test
