@@ -183,9 +183,13 @@ resource "aws_instance" "sri_quickbasket_front_end_server" {
   availability_zone = var.FE_subnet_azs[0]
   # Ensure the IAM role and userdata script actually exist in your environment
   iam_instance_profile = var.sri-frontend-iam-profile-name
-  user_data = templatefile("${path.module}/quick_basket_frontendscript.sh",{
+  user_data = base64encode(templatefile("${path.module}/quick_basket_frontendscript.sh", {
+    aws_region      = var.sri_aws_region
+    # Dynamically injects the 12-digit AWS Account ID:
+    aws_account_id  = data.aws_caller_identity.current.account_id 
+    # The DNS name of your Backend Application Load Balancer
     backend_alb_dns = var.backend_alb_dns_name
-  })
+  }))
   
    private_ip = "10.0.3.100"
   
@@ -193,7 +197,7 @@ resource "aws_instance" "sri_quickbasket_front_end_server" {
     Name = "sri_quickbasket_Frontend_server_${var.config.environment}"
   }
 }
-
+data "aws_caller_identity" "current" {} #this we are using to fetch the account id 
 resource "aws_instance" "sri_quickbasket_back_end_server" {
   ami                    = var.config.ami
   instance_type          = var.config.instance_type
@@ -210,6 +214,7 @@ resource "aws_instance" "sri_quickbasket_back_end_server" {
     rds_secret_name=var.sri_rds_secret_name
     products_img_cldfrnt_name=var.sri_img_fetch_cloudfront_domain_name
     products_img_bucket_name=var.sri_products_img_bucket_name
+    aws_account_id=data.aws_caller_identity.current.aws_account_id
     }))
   private_ip = "10.0.5.99"
   tags = {

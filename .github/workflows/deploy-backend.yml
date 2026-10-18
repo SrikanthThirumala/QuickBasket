@@ -1,0 +1,56 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: ["main"]
+    paths: [ "Backend/**" ]
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECR_REPOSITORY: quickbasket-backend
+  AWS_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-quickbasket-ecr-role
+  TARGET_ENV: ${{ vars.ENVIRONMENT }}
+
+permissions:
+  id-token: write # Required for OIDC authentication
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, Tag, and Push Image
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          cd Backend
+          # Build and tag with both 'latest' and the specific commit hash
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          # Push all tags to ECR
+          docker push -a $ECR_REGISTRY/$ECR_REPOSITORY  
+
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_ENV 
+      
+      - name: Deploy to ASG via AWS SSM
+        run: |
+          aws ssm send-command \
+            --targets "Key=tag:Name,Values=sri_quickbasket_Backend_server_${{ env.TARGET_ENV }}" \
+            --document-name "AWS-RunShellScript" \
+            --parameters 'commands=[
+              "aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}",
+              "docker pull ${{ env.image }}",
+              "docker stop quickbasket-api || true",
+              "docker rm quickbasket-api || true",
+              "docker run -d --restart always -p 5000:5000 --env-file /app/.env --name quickbasket-api ${{ env.image }}"
+            ]'

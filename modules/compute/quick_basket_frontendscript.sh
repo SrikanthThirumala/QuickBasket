@@ -7,27 +7,25 @@ usermod -aG docker ec2-user
 
 # 2. Prepare app directory
 mkdir -p /app
-cd /app
 
-# 3. Clone the code efficiently
-git clone --depth 1 https://github.com/SrikanthThirumala/QuickBasket.git
 
-# Navigate into the frontend folder (Ensure casing matches your repo: frontend or Frontend)
-cd QuickBasket/Frontend 
 
-# 4. Write out the dynamic .env.production file for Next.js
-cat <<'EOT' > .env.production
+cat <<'EOT' > /app/.env.production
 # Add any environment variables your Next.js app needs here
 NEXT_PUBLIC_API_URL=http://${backend_alb_dns}
 EOT
 
-# 5. Build the Docker image locally (This uses the .env.production we just created)
-docker build -t quickbasket-frontend:latest .
 
-# 6. Launch the frontend container (Next.js typically runs on port 3000)
+# Using Terraform variables to dynamically construct the ECR URL
+ECR_URL="${aws_account_id}.dkr.ecr.${aws_region}.amazonaws.com"
+
+aws ecr get-login-password --region ${aws_region} | docker login --username AWS --password-stdin $ECR_URL
+
+docker pull $ECR_URL/quickbasket-frontend:latest
+
 docker run -d \
   --restart always \
   -p 3000:3000 \
-  --env-file .env.production \
+  --env-file /app/.env.production \
   --name quickbasket-web \
-  quickbasket-frontend:latest
+  $ECR_URL/quickbasket-frontend:latest

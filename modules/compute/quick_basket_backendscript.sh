@@ -1,56 +1,41 @@
 #!/bin/bash
-# 1. Update and install Docker if not present
+# 1. System Updates & Docker Installation
 dnf update -y
-dnf install -y docker git
+dnf install -y docker
 systemctl enable --now docker
 usermod -aG docker ec2-user
 
-# #  Prepare app directory ---->update this code when we build pipeline to build docker using pipeline 
-# mkdir -p /app/backend
-# cd /app/backend
-
+# 2. Create the environment file using Terraform variables
 mkdir -p /app
-cd /app
-
-git clone --depth 1 https://github.com/SrikanthThirumala/QuickBasket.git
-shopt -s dotglob
-shopt -u dotglob
-
-cd QuickBasket/Backend
-
-
-# 3. Write out the dynamic .env file
-cat <<'EOT' > .env
-# Server Config
+cat <<'EOT' > /app/.env
 FLASK_ENV=production
 PORT=5000
-
-# AWS Config
 AWS_REGION=${aws_region}
 DB_SECRET_NAME=${rds_secret_name}
 MAIL_SECRET_NAME=${mail_secret_name}
-
-
-
-# RDS Networking variables
 RDS_HOSTNAME=${db_endpoint}
-DB_NAME=quickbasket_db
-DB_PORT=3306
-
-# Storage & CDN
 S3_BUCKET_NAME=${products_img_bucket_name}
 CLOUDFRONT_DOMAIN=${products_img_cldfrnt_name}
 EOT
 
-docker build -t quickbasket-backend:latest .
+# 3. Authenticate with Amazon ECR
+# Using Terraform variables to dynamically construct the ECR URL
+ECR_URL="${aws_account_id}.dkr.ecr.${aws_region}.amazonaws.com"
 
-# 4. Launch the container
+aws ecr get-login-password --region ${aws_region} | docker login --username AWS --password-stdin $ECR_URL
+
+# 4. Pull the latest image and run the container
+docker pull $ECR_URL/quickbasket-backend:latest
+
 docker run -d \
   --restart always \
   -p 5000:5000 \
-  --env-file .env \
+  --env-file /app/.env \
   --name quickbasket-api \
-  quickbasket-backend:latest
+  $ECR_URL/quickbasket-backend:latest
 
-docker exec -it quickbasket-api python init_db.py
+  #just temporary
+  
+  sleep 5m
 
+  docker exec -it quickbasket-api python init_db.py
