@@ -4,25 +4,30 @@ on:
   push:
     branches: ["main"]
     paths: [ "Backend/**" ]
+
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   ECR_REPOSITORY: quickbasket-backend
   AWS_ROLE_ARN: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-quickbasket-ecr-role
   TARGET_ENV: ${{ vars.ENVIRONMENT }}
 
-permissions:
-  id-token: write # Required for OIDC authentication
-  contents: read
+
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Required for OIDC authentication
+      contents: read
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
         
       - name: Login to Amazon ECR
         id: login-ecr

@@ -214,7 +214,7 @@ resource "aws_instance" "sri_quickbasket_back_end_server" {
     rds_secret_name=var.sri_rds_secret_name
     products_img_cldfrnt_name=var.sri_img_fetch_cloudfront_domain_name
     products_img_bucket_name=var.sri_products_img_bucket_name
-    aws_account_id=data.aws_caller_identity.current.aws_account_id
+    aws_account_id=data.aws_caller_identity.current.account_id
     }))
   private_ip = "10.0.5.99"
   tags = {
